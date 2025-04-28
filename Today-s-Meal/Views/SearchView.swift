@@ -24,16 +24,6 @@ struct SearchView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
-                // ⭐️ 테스트용 권한 요청 버튼 ⭐️
-                Button("!!! 위치 권한 수동 요청 테스트 !!!") {
-                    print("--- SearchView: 수동 권한 요청 버튼 탭됨 --- ")
-                    locationService.requestLocationPermission()
-                }
-                .padding()
-                .background(Color.purple)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                
                 // Location status
                 locationStatusView
                 
@@ -195,8 +185,8 @@ struct SearchView: View {
     private var locationStatusText: String {
         switch locationService.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            if let location = locationService.currentLocation {
-                return "위치 확인됨: \(String(format: "%.6f", location.coordinate.latitude)), \(String(format: "%.6f", location.coordinate.longitude))"
+            if locationService.currentLocation != nil {
+                return "위치 확인됨"
             } else {
                 return "위치 확인 중..."
             }

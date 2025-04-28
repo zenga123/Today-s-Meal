@@ -50,10 +50,5 @@
     <string>white</string>
     <key>GMSMapServicesClientId</key>
     <string>YOUR_MAPS_CLIENT_ID</string>
-    <key>UIAppFonts</key>
-    <array>
-        <string>Roboto-Regular.ttf</string>
-        <string>Roboto-Bold.ttf</string>
-    </array>
 </dict>
 </plist> 

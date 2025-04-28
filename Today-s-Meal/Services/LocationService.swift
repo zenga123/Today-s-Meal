@@ -23,6 +23,9 @@ class LocationService: NSObject, ObservableObject {
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var locationError: LocationError?
     
+    // 위치 업데이트 타이머
+    private var locationUpdateTimer: Timer?
+    
     var locationPublisher: AnyPublisher<CLLocation, LocationError> {
         return locationSubject.eraseToAnyPublisher()
     }
@@ -34,7 +37,8 @@ class LocationService: NSObject, ObservableObject {
     
     private func setupLocationManager() {
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters // 정확도 낮춤 (배터리 최적화)
+        locationManager.distanceFilter = 200 // 200미터 이동 시에만 업데이트 (배터리 최적화)
         
         // iOS 버전에 따라 적절한 방법으로 권한 상태 확인
         if #available(iOS 14.0, *) {
@@ -87,7 +91,16 @@ class LocationService: NSObject, ObservableObject {
     
     func startUpdatingLocation() {
         if authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways {
-            locationManager.startUpdatingLocation()
+            // 주기적 위치 업데이트 설정 (30초마다)
+            stopUpdateTimer()
+            
+            // 초기 위치 요청
+            locationManager.requestLocation()
+            
+            // 타이머 설정 (30초마다 위치 업데이트)
+            locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+                self?.locationManager.requestLocation()
+            }
         } else if authorizationStatus == .notDetermined {
             requestLocationPermission()
         } else {
@@ -97,6 +110,16 @@ class LocationService: NSObject, ObservableObject {
     
     func stopUpdatingLocation() {
         locationManager.stopUpdatingLocation()
+        stopUpdateTimer()
+    }
+    
+    private func stopUpdateTimer() {
+        locationUpdateTimer?.invalidate()
+        locationUpdateTimer = nil
+    }
+    
+    deinit {
+        stopUpdateTimer()
     }
     
     private func geocodeLocation(_ location: CLLocation) {
@@ -135,12 +158,11 @@ extension LocationService: CLLocationManagerDelegate {
             switch manager.authorizationStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 self.locationError = nil
-                // 권한이 승인되면 자동으로 위치 업데이트를 시작하도록 할 수 있음
-                self.locationManager.startUpdatingLocation() // 또는 self.requestLocation()
+                self.requestLocation() // 권한이 승인되면 한 번만 위치 요청
             case .denied, .restricted:
                 self.locationError = .notAuthorized
             case .notDetermined:
-                // 여기서 별도 처리 불필요 (applicationDidBecomeActive 등에서 처리)
+                // 여기서 별도 처리 불필요
                 break
             @unknown default:
                 break
