@@ -1,4 +1,5 @@
 import Foundation
+import CoreLocation
 
 // MARK: - Root response
 struct HotPepperResponse: Codable {
@@ -72,6 +73,10 @@ struct Restaurant: Codable, Identifiable {
     let english: String
     let pet: String
     let child: String
+    
+    // 지도 관련 추가 속성 (코드에서 설정)
+    var distance: Int?
+    var userLocation: CLLocation?
     
     enum CodingKeys: String, CodingKey {
         case id

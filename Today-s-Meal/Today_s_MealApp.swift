@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import GoogleMaps
 
 // 앱 정보 확인용 익스텐션 추가
 extension Bundle {
@@ -21,7 +22,8 @@ extension Bundle {
             let keys = [
                 "NSLocationWhenInUseUsageDescription",
                 "CFBundleIdentifier",
-                "CFBundleDisplayName"
+                "CFBundleDisplayName",
+                "GMSApiKey"
             ]
             
             for key in keys {
@@ -42,11 +44,15 @@ extension Bundle {
 
 @main
 struct Today_s_MealApp: App {
+    // UIApplicationDelegate 연결
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     // 앱 시작 시 위치 서비스 초기화 및 권한 요청
     @StateObject private var locationService = LocationService()
     
     init() {
         print("🟢🟢🟢 Today_s_MealApp: init 시작 🟢🟢🟢")
+        
         // Info.plist 내용 출력
         Bundle.printInfoPlistContents()
         

@@ -9,6 +9,7 @@ class RestaurantViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var searchRadius: Double = 3
+    @Published var showMapView = false // 지도 보기/목록 보기 토글
     
     // Search range options (in kilometers) as defined by API
     let rangeOptions = [
@@ -39,7 +40,31 @@ class RestaurantViewModel: ObservableObject {
                     self?.errorMessage = "오류: \(error.description)"
                 }
             }, receiveValue: { [weak self] restaurants in
-                self?.restaurants = restaurants
+                guard let self = self, let userLocation = self.currentLocation else {
+                    self?.restaurants = restaurants
+                    return
+                }
+                
+                // 사용자 위치 정보와 각 음식점까지의 거리 계산
+                var updatedRestaurants = restaurants
+                updatedRestaurants = updatedRestaurants.map { restaurant in
+                    var updatedRestaurant = restaurant
+                    
+                    // 음식점 위치 설정
+                    let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
+                    
+                    // 거리 계산 (미터 단위)
+                    let distanceInMeters = Int(userLocation.distance(from: restaurantLocation))
+                    updatedRestaurant.distance = distanceInMeters
+                    updatedRestaurant.userLocation = userLocation
+                    
+                    return updatedRestaurant
+                }
+                
+                // 거리순으로 정렬
+                updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
+                
+                self.restaurants = updatedRestaurants
             })
             .store(in: &cancellables)
     }
@@ -55,5 +80,10 @@ class RestaurantViewModel: ObservableObject {
     
     func selectRestaurant(_ restaurant: Restaurant) {
         selectedRestaurant = restaurant
+    }
+    
+    // 지도/목록 보기 토글
+    func toggleMapView() {
+        showMapView.toggle()
     }
 } 

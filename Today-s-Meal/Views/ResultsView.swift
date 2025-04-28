@@ -1,21 +1,53 @@
 import SwiftUI
+import MapKit
 
 struct ResultsView: View {
     let restaurants: [Restaurant]
     @State private var selectedRestaurant: Restaurant?
     @State private var navigateToDetail = false
+    @State private var showMapView = false
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var locationService: LocationService
     
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
+            // 지도/목록 토글 버튼
+            HStack {
+                Spacer()
+                
+                Button(action: {
+                    withAnimation {
+                        showMapView.toggle()
+                    }
+                }) {
+                    HStack {
+                        Image(systemName: showMapView ? "list.bullet" : "map")
+                        Text(showMapView ? "목록으로 보기" : "지도로 보기")
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange.opacity(0.2))
+                    .foregroundColor(.orange)
+                    .cornerRadius(20)
+                }
+                .padding(.trailing)
+                .padding(.vertical, 8)
+            }
+            
             if restaurants.isEmpty {
                 emptyResultsView
             } else {
-                restaurantListView
+                if showMapView {
+                    // 지도 뷰
+                    RestaurantMapView(restaurants: restaurants, userLocation: locationService.currentLocation)
+                        .edgesIgnoringSafeArea(.bottom)
+                } else {
+                    // 리스트 뷰
+                    restaurantListView
+                }
             }
         }
-        .navigationTitle("검색 결과")
+        .navigationTitle("검색 결과 (\(restaurants.count))")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToDetail) {
             if let restaurant = selectedRestaurant {
@@ -128,11 +160,29 @@ struct RestaurantRow: View {
                 HStack {
                     Image(systemName: "yen.circle.fill")
                     Text(restaurant.budget.name)
+                    
+                    if let distance = restaurant.distance {
+                        Spacer()
+                        HStack(spacing: 2) {
+                            Image(systemName: "location.circle")
+                            Text(formatDistance(distance))
+                        }
+                        .foregroundColor(.blue)
+                    }
                 }
                 .font(.caption)
                 .foregroundColor(.orange)
             }
         }
         .padding(.vertical, 8)
+    }
+    
+    private func formatDistance(_ distance: Int) -> String {
+        if distance < 1000 {
+            return "\(distance)m"
+        } else {
+            let distanceKm = Double(distance) / 1000.0
+            return String(format: "%.1f km", distanceKm)
+        }
     }
 } 

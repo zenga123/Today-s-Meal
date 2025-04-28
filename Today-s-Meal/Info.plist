@@ -45,10 +45,22 @@
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>GMSApiKey</key>
-    <string>YOUR_GOOGLE_MAPS_API_KEY</string>
+    <string>AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8</string>
     <key>GMSBackgroundColor</key>
     <string>white</string>
     <key>GMSMapServicesClientId</key>
     <string>YOUR_MAPS_CLIENT_ID</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>googlechromes</string>
+        <string>comgooglemaps</string>
+    </array>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
 </dict>
 </plist> 

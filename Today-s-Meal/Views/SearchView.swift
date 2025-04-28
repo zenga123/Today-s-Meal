@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 import UIKit
+import GoogleMaps
 
 struct SearchView: View {
     // 환경 객체에서 위치 서비스 사용
@@ -9,23 +10,85 @@ struct SearchView: View {
     @State private var navigateToResults = false
     @State private var selectedRangeIndex = 2 // Default to 1000m
     @State private var showLocationPermissionAlert = false
+    @State private var showDebugActions = false // 디버그 액션 상태
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
                 // App logo/header
-                Image(systemName: "fork.knife.circle.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.orange)
+                HStack {
+                    Image(systemName: "fork.knife.circle.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 60, height: 60)
+                        .foregroundColor(.orange)
+                    
+                    Text("오늘의 식사")
+                        .font(.title)
+                        .fontWeight(.bold)
+                    
+                    Spacer()
+                    
+                    // 디버그 버튼 (3번 탭하면 표시)
+                    Button(action: {
+                        showDebugActions.toggle()
+                        print("디버그 모드: \(showDebugActions ? "활성화" : "비활성화")")
+                    }) {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.title2)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 10)
                 
-                Text("오늘의 식사")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                // 디버그 액션 패널
+                if showDebugActions {
+                    VStack(spacing: 8) {
+                        Text("디버그 패널")
+                            .font(.subheadline.bold())
+                        
+                        Button("Google Maps 재초기화") {
+                            // Google Maps 직접 초기화
+                            let apiKey = "AIzaSyDkcxAvN23yEYFGt-V4-2eIqtw86G9oupw"
+                            GMSServices.provideAPIKey(apiKey)
+                            print("🗺️ Google Maps API 키 재설정: \(apiKey)")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("위치 서비스 강제 갱신") {
+                            locationService.requestLocationPermission()
+                            print("위치 서비스 강제 갱신 요청")
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                }
+                
+                // 지도 표시 - 전체 화면 너비로 설정
+                ZStack {
+                    // 새로운 네이티브 지도 뷰 사용
+                    NativeMapView(mapLocation: $locationService.currentLocation)
+                        .frame(height: 250)
+                        .clipped()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 0)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
+                    
+                    if locationService.currentLocation == nil {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .scaleEffect(1.5)
+                    }
+                }
+                .edgesIgnoringSafeArea(.horizontal)
                 
                 // Location status
                 locationStatusView
+                    .padding(.top, 16)
                 
                 // 위치 권한 요청 버튼 (위치 권한이 없을 때만 표시)
                 if locationService.authorizationStatus == .notDetermined || 
@@ -47,6 +110,7 @@ struct SearchView: View {
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
+                    .padding(.top, 8)
                     
                     Button(action: {
                         // 설정으로 바로 이동
@@ -65,6 +129,7 @@ struct SearchView: View {
                         .cornerRadius(10)
                     }
                     .padding(.horizontal)
+                    .padding(.top, 8)
                 }
                 
                 // Search radius picker
@@ -80,6 +145,7 @@ struct SearchView: View {
                     .pickerStyle(SegmentedPickerStyle())
                 }
                 .padding(.horizontal)
+                .padding(.top, 16)
                 
                 // Search button
                 Button(action: {
@@ -96,6 +162,7 @@ struct SearchView: View {
                     .cornerRadius(10)
                 }
                 .padding(.horizontal)
+                .padding(.top, 16)
                 .disabled(locationService.currentLocation == nil)
                 
                 // Error message
@@ -107,22 +174,27 @@ struct SearchView: View {
                 
                 Spacer()
             }
-            .padding()
+            .preferredColorScheme(.dark) // 다크 모드 강제 적용
             .navigationDestination(isPresented: $navigateToResults) {
                 ResultsView(restaurants: viewModel.restaurants)
                     .environmentObject(locationService)
             }
             .onAppear {
                 // 화면 표시 시 위치 권한을 다시 한번 요청
+                print("SearchView 화면 나타남, 위치 권한 요청")
                 locationService.requestLocationPermission()
                 
                 if let location = locationService.currentLocation {
                     viewModel.currentLocation = location
+                    print("현재 위치가 있음: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+                } else {
+                    print("현재 위치 정보 없음")
                 }
             }
             .onChange(of: locationService.currentLocation) { newLocation in
                 if let location = newLocation {
                     viewModel.currentLocation = location
+                    print("위치 업데이트: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                 }
             }
             .onChange(of: selectedRangeIndex) { newValue in
