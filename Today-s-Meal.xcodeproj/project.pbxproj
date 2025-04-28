@@ -11,6 +11,14 @@
 		105DAA162DBE73D200C8C28B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA152DBE73D200C8C28B /* ContentView.swift */; };
 		105DAA182DBE73D400C8C28B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 105DAA172DBE73D400C8C28B /* Assets.xcassets */; };
 		105DAA1B2DBE73D400C8C28B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 105DAA1A2DBE73D400C8C28B /* Preview Assets.xcassets */; };
+		105DAA2F2DBE782000C8C28B /* RestaurantViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA222DBE781F00C8C28B /* RestaurantViewModel.swift */; };
+		105DAA302DBE782000C8C28B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 105DAA242DBE782000C8C28B /* Preview Assets.xcassets */; };
+		105DAA322DBE782000C8C28B /* RestaurantModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA282DBE782000C8C28B /* RestaurantModels.swift */; };
+		105DAA332DBE782000C8C28B /* RestaurantAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA2A2DBE782000C8C28B /* RestaurantAPI.swift */; };
+		105DAA342DBE782000C8C28B /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA2C2DBE782000C8C28B /* DetailView.swift */; };
+		105DAA352DBE782000C8C28B /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA2D2DBE782000C8C28B /* SearchView.swift */; };
+		105DAA362DBE782000C8C28B /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA2E2DBE782000C8C28B /* ResultsView.swift */; };
+		105DAA3F2DBF594E00C8C28B /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA3E2DBF594E00C8C28B /* LocationService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +27,15 @@
 		105DAA152DBE73D200C8C28B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		105DAA172DBE73D400C8C28B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		105DAA1A2DBE73D400C8C28B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		105DAA222DBE781F00C8C28B /* RestaurantViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RestaurantViewModel.swift; sourceTree = "<group>"; };
+		105DAA242DBE782000C8C28B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		105DAA282DBE782000C8C28B /* RestaurantModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RestaurantModels.swift; sourceTree = "<group>"; };
+		105DAA2A2DBE782000C8C28B /* RestaurantAPI.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RestaurantAPI.swift; sourceTree = "<group>"; };
+		105DAA2C2DBE782000C8C28B /* DetailView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
+		105DAA2D2DBE782000C8C28B /* SearchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
+		105DAA2E2DBE782000C8C28B /* ResultsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
+		105DAA372DBE7A4E00C8C28B /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		105DAA3E2DBF594E00C8C28B /* LocationService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,6 +70,13 @@
 			children = (
 				105DAA132DBE73D200C8C28B /* Today_s_MealApp.swift */,
 				105DAA152DBE73D200C8C28B /* ContentView.swift */,
+				105DAA372DBE7A4E00C8C28B /* Info.plist */,
+				105DAA3D2DBF594E00C8C28B /* Services */,
+				105DAA272DBE782000C8C28B /* Models */,
+				105DAA292DBE782000C8C28B /* Network */,
+				105DAA232DBE782000C8C28B /* Preview Content */,
+				105DAA212DBE781F00C8C28B /* ViewModels */,
+				105DAA2B2DBE782000C8C28B /* Views */,
 				105DAA172DBE73D400C8C28B /* Assets.xcassets */,
 				105DAA192DBE73D400C8C28B /* Preview Content */,
 			);
@@ -66,6 +90,57 @@
 			);
 			path = "Preview Content";
 			sourceTree = "<group>";
+		};
+		105DAA212DBE781F00C8C28B /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA222DBE781F00C8C28B /* RestaurantViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		105DAA232DBE782000C8C28B /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA242DBE782000C8C28B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		105DAA272DBE782000C8C28B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA282DBE782000C8C28B /* RestaurantModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		105DAA292DBE782000C8C28B /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA2A2DBE782000C8C28B /* RestaurantAPI.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		105DAA2B2DBE782000C8C28B /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA2C2DBE782000C8C28B /* DetailView.swift */,
+				105DAA2D2DBE782000C8C28B /* SearchView.swift */,
+				105DAA2E2DBE782000C8C28B /* ResultsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		105DAA3D2DBF594E00C8C28B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				105DAA3E2DBF594E00C8C28B /* LocationService.swift */,
+			);
+			name = Services;
+			path = "Today-s-Meal/Services";
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -126,6 +201,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				105DAA1B2DBE73D400C8C28B /* Preview Assets.xcassets in Resources */,
+				105DAA302DBE782000C8C28B /* Preview Assets.xcassets in Resources */,
 				105DAA182DBE73D400C8C28B /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -137,8 +213,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				105DAA362DBE782000C8C28B /* ResultsView.swift in Sources */,
 				105DAA162DBE73D200C8C28B /* ContentView.swift in Sources */,
+				105DAA2F2DBE782000C8C28B /* RestaurantViewModel.swift in Sources */,
+				105DAA342DBE782000C8C28B /* DetailView.swift in Sources */,
+				105DAA3F2DBF594E00C8C28B /* LocationService.swift in Sources */,
+				105DAA352DBE782000C8C28B /* SearchView.swift in Sources */,
+				105DAA322DBE782000C8C28B /* RestaurantModels.swift in Sources */,
 				105DAA142DBE73D200C8C28B /* Today_s_MealApp.swift in Sources */,
+				105DAA332DBE782000C8C28B /* RestaurantAPI.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,7 +357,8 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Today-s-Meal/Preview Content\"";
 				DEVELOPMENT_TEAM = 3CDS36TP26;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Today-s-Meal/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -303,7 +387,8 @@
 				DEVELOPMENT_ASSET_PATHS = "\"Today-s-Meal/Preview Content\"";
 				DEVELOPMENT_TEAM = 3CDS36TP26;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Today-s-Meal/Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

@@ -8,17 +8,15 @@
 import SwiftUI
 
 struct ContentView: View {
+    // 앱에서 전달된 위치 서비스 사용
+    @EnvironmentObject var locationService: LocationService
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
+        SearchView()
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(LocationService()) // 프리뷰에서도 위치 서비스 제공
 }
