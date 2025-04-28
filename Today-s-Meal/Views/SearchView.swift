@@ -9,6 +9,7 @@ struct SearchView: View {
     @StateObject private var viewModel = RestaurantViewModel()
     @State private var navigateToResults = false
     @State private var selectedRangeIndex = 2 // Default to 1000m
+    @State private var searchRadius: Double = 1000 // 기본 반경 1000m
     @State private var showLocationPermissionAlert = false
     @State private var showDebugActions = false // 디버그 액션 상태
     
@@ -49,7 +50,7 @@ struct SearchView: View {
                         
                         Button("Google Maps 재초기화") {
                             // Google Maps 직접 초기화
-                            let apiKey = "AIzaSyDkcxAvN23yEYFGt-V4-2eIqtw86G9oupw"
+                            let apiKey = "AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8"
                             GMSServices.provideAPIKey(apiKey)
                             print("🗺️ Google Maps API 키 재설정: \(apiKey)")
                         }
@@ -70,13 +71,16 @@ struct SearchView: View {
                 // 지도 표시 - 전체 화면 너비로 설정
                 ZStack {
                     // 새로운 네이티브 지도 뷰 사용
-                    NativeMapView(mapLocation: $locationService.currentLocation)
-                        .frame(height: 250)
-                        .clipped()
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 0)
-                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                        )
+                    NativeMapView(
+                        mapLocation: $locationService.currentLocation,
+                        selectedRadius: $searchRadius
+                    )
+                    .frame(height: 250)
+                    .clipped()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
                     
                     if locationService.currentLocation == nil {
                         ProgressView()
@@ -198,7 +202,23 @@ struct SearchView: View {
                 }
             }
             .onChange(of: selectedRangeIndex) { newValue in
-                viewModel.searchRadius = Double(viewModel.rangeOptions[newValue].value)
+                // 선택된 범위 옵션에 따라 거리 값 설정
+                let newRadius = Double(viewModel.rangeOptions[newValue].value)
+                viewModel.searchRadius = newRadius
+                searchRadius = newRadius // 지도에 표시될 반경 업데이트
+                print("검색 반경 변경: \(newRadius)m")
+            }
+            .onChange(of: searchRadius) { newRadius in
+                // 지도에서 변경된 반경에 따라 선택 영역 업데이트
+                let closestIndex = viewModel.rangeOptions.indices.min(by: {
+                    abs(Double(viewModel.rangeOptions[$0].value) - newRadius) <
+                    abs(Double(viewModel.rangeOptions[$1].value) - newRadius)
+                }) ?? 2 // 기본값 1000m (인덱스 2)
+                
+                if selectedRangeIndex != closestIndex {
+                    selectedRangeIndex = closestIndex
+                    viewModel.searchRadius = Double(viewModel.rangeOptions[closestIndex].value)
+                }
             }
             .alert("위치 권한 필요", isPresented: $showLocationPermissionAlert) {
                 Button("설정으로 이동") {
