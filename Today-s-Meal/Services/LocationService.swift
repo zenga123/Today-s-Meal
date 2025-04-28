@@ -29,23 +29,18 @@ class LocationService: NSObject, ObservableObject {
     
     override init() {
         super.init()
-        print("✅✅✅ LocationService (Services 폴더): init 시작 ✅✅✅")
         setupLocationManager()
-        print("✅✅✅ LocationService (Services 폴더): init 완료 ✅✅✅")
     }
     
     private func setupLocationManager() {
-        print("✅✅✅ LocationService (Services 폴더): setupLocationManager 호출됨")
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         
         // iOS 버전에 따라 적절한 방법으로 권한 상태 확인
         if #available(iOS 14.0, *) {
             authorizationStatus = locationManager.authorizationStatus
-            print("LocationService - 현재 권한 상태(iOS 14+): \(authorizationStatus.rawValue)")
         } else {
             authorizationStatus = CLLocationManager.authorizationStatus()
-            print("LocationService - 현재 권한 상태(iOS 14 이전): \(authorizationStatus.rawValue)")
         }
         
         // ⭐️ NotificationCenter 등록 임시 주석 처리 ⭐️
@@ -68,32 +63,25 @@ class LocationService: NSObject, ObservableObject {
     // }
     
     func requestLocationPermission() {
-        print("✅✅✅ LocationService (Services 폴더): requestLocationPermission 호출됨 (현재 상태: \(locationManager.authorizationStatus.rawValue))")
         guard locationManager.authorizationStatus == .notDetermined else {
-            print("✅✅✅ LocationService (Services 폴더): 권한 상태가 .notDetermined가 아니므로 요청 스킵")
             return
         }
         
         DispatchQueue.main.async { [weak self] in
-            print("✅✅✅ LocationService (Services 폴더): locationManager.requestWhenInUseAuthorization() 호출 시도!!! ✅✅✅")
             self?.locationManager.requestWhenInUseAuthorization()
         }
     }
     
     func requestLocation() {
-        print("LocationService - 위치 요청 함수 호출됨")
-        
         // 권한 상태 재확인
         let currentStatus = locationManager.authorizationStatus
         guard currentStatus == .authorizedWhenInUse || currentStatus == .authorizedAlways else {
-            print("LocationService - requestLocation 호출 시 권한 부족: \(currentStatus.rawValue)")
             if currentStatus == .notDetermined {
                 requestLocationPermission() // 만약 아직 미결정이면 다시 요청
             }
             return
         }
         
-        print("LocationService - 위치 업데이트 요청")
         locationManager.requestLocation()
     }
     
@@ -141,36 +129,27 @@ class LocationService: NSObject, ObservableObject {
 
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-         print("✅✅✅ LocationService Delegate: locationManagerDidChangeAuthorization 호출됨 - 새 상태: \(manager.authorizationStatus.rawValue)")
-        
         DispatchQueue.main.async {
             self.authorizationStatus = manager.authorizationStatus
             
             switch manager.authorizationStatus {
             case .authorizedWhenInUse, .authorizedAlways:
-                print("### LocationService Delegate: 권한 승인됨, 위치 요청")
                 self.locationError = nil
                 // 권한이 승인되면 자동으로 위치 업데이트를 시작하도록 할 수 있음
                 self.locationManager.startUpdatingLocation() // 또는 self.requestLocation()
             case .denied, .restricted:
-                print("### LocationService Delegate: 권한 거부됨")
                 self.locationError = .notAuthorized
             case .notDetermined:
-                print("### LocationService Delegate: 권한 아직 결정 안됨")
                 // 여기서 별도 처리 불필요 (applicationDidBecomeActive 등에서 처리)
                 break
             @unknown default:
-                print("### LocationService Delegate: 알 수 없는 상태")
                 break
             }
         }
     }
     
      func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        print("### LocationService Delegate: didUpdateLocations 호출됨")
         guard let location = locations.last else { return }
-        
-        print("LocationService - 위치 업데이트 성공: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         
         DispatchQueue.main.async {
             self.currentLocation = location
@@ -182,7 +161,6 @@ extension LocationService: CLLocationManagerDelegate {
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("### LocationService Delegate: didFailWithError: \(error.localizedDescription)")
         let locationError: LocationError
         
         if let error = error as? CLError {
