@@ -14,10 +14,16 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 검색 반경 (미터 단위)
     var searchRadius: Double = 1000 {
         didSet {
-            // 반경이 변경되면 즉시 업데이트
-            updateRadiusCircle()
-            updateRadiusLabel()
-            updateScaleBar()
+            if abs(oldValue - searchRadius) > 0.1 {
+                print("🔄 searchRadius didSet: \(oldValue) -> \(searchRadius)")
+                // 반경이 변경되면 즉시 업데이트
+                updateRadiusCircle()
+                updateRadiusLabel()
+                updateScaleBar()
+                
+                // 줌 레벨 자동 조정 
+                adjustZoomToFitRadius(searchRadius)
+            }
         }
     }
     
@@ -195,29 +201,22 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         moveToCurrentLocation()
     }
     
-    // 검색 반경 변경 메서드
-    func updateSearchRadius(_ radius: Double) {
-        self.searchRadius = radius
-    }
-    
     // 반경 원 업데이트
     private func updateRadiusCircle() {
         // 기존 원 제거
         radiusCircle?.map = nil
         
-        // 보라색 원을 표시하지 않음 - 원하는 경우 아래 주석을 해제하여 다시 활성화 가능
-        /*
+        // 원 표시 기능 활성화
         guard let location = currentLocation else { return }
         
         // 새 원 생성
         let circle = GMSCircle(position: location.coordinate, radius: searchRadius)
-        circle.fillColor = UIColor.blue.withAlphaComponent(0.1)
-        circle.strokeColor = UIColor.blue.withAlphaComponent(0.5)
-        circle.strokeWidth = 1
+        circle.fillColor = UIColor.clear // 내부 완전 투명
+        circle.strokeColor = UIColor.blue // 테두리 파란색
+        circle.strokeWidth = 2 // 테두리 두께
         circle.map = mapView
         
         self.radiusCircle = circle
-        */
     }
     
     // 현재 위치로 지도 이동
@@ -275,20 +274,24 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         scaleBarLine.translatesAutoresizingMaskIntoConstraints = false
         scaleBarLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 고정 너비 설정 (Google Maps 스타일)
-        let fixedScaleBarWidth: CGFloat = 100
+        // 고정 너비 설정
+        let fixedContainerWidth: CGFloat = 120
+        let initialLineWith: CGFloat = 100 // 초기 라인 너비 (임의)
         
         NSLayoutConstraint.activate([
+            // 컨테이너 위치 및 고정 너비
             scaleBarView.leadingAnchor.constraint(equalTo: mapView.leadingAnchor, constant: 16),
             scaleBarView.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -16),
-            scaleBarView.widthAnchor.constraint(equalToConstant: fixedScaleBarWidth + 20),
+            scaleBarView.widthAnchor.constraint(equalToConstant: fixedContainerWidth),
             scaleBarView.heightAnchor.constraint(equalToConstant: 30),
             
+            // 라인 위치 및 초기 너비/높이
             scaleBarLine.leadingAnchor.constraint(equalTo: scaleBarView.leadingAnchor),
             scaleBarLine.bottomAnchor.constraint(equalTo: scaleBarView.bottomAnchor),
-            scaleBarLine.widthAnchor.constraint(equalToConstant: fixedScaleBarWidth),
+            scaleBarLine.widthAnchor.constraint(equalToConstant: initialLineWith), // 초기값, 동적 변경됨
             scaleBarLine.heightAnchor.constraint(equalToConstant: 4),
             
+            // 라벨 위치
             scaleBarLabel.centerXAnchor.constraint(equalTo: scaleBarLine.centerXAnchor),
             scaleBarLabel.topAnchor.constraint(equalTo: scaleBarLine.bottomAnchor, constant: 2)
         ])
@@ -296,31 +299,11 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 초기 텍스트 설정
         scaleBarLabel.text = "1 km"
         
-        // 구글 맵 스타일 스케일 마커 추가
-        addScaleMarkers(to: scaleBarLine, width: fixedScaleBarWidth)
+        // 고정된 눈금 추가 제거
+        // addScaleMarkers(referenceWidth: markerReferenceWidth)
         
         // 스케일 바 초기 업데이트
         updateScaleBar()
-    }
-    
-    // 스케일 마커(눈금) 추가 - 구글맵 스타일
-    private func addScaleMarkers(to scaleBarLine: UIView, width: CGFloat) {
-        // 눈금 추가 (시작, 중간, 끝)
-        let markerPositions = [0, width/2, width]
-        
-        for position in markerPositions {
-            let marker = UIView()
-            marker.backgroundColor = .black
-            marker.translatesAutoresizingMaskIntoConstraints = false
-            scaleBarLine.addSubview(marker)
-            
-            NSLayoutConstraint.activate([
-                marker.centerXAnchor.constraint(equalTo: scaleBarLine.leadingAnchor, constant: position),
-                marker.topAnchor.constraint(equalTo: scaleBarLine.topAnchor, constant: -3),
-                marker.widthAnchor.constraint(equalToConstant: 1),
-                marker.heightAnchor.constraint(equalToConstant: 10)
-            ])
-        }
     }
     
     // 스케일 바 업데이트
@@ -328,8 +311,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // nil 체크 및 필요한 요소 가져오기
         guard let mapView = self.mapView,
               let scaleBarLine = self.scaleBarLine,
-              let scaleBarView = self.scaleBarView,
-              let scaleBarLabel = self.scaleBarLabel else {
+              let scaleBarLabel = self.scaleBarLabel,
+              let scaleBarView = self.scaleBarView // scaleBarView도 guard에 포함
+        else {
             //print("⚠️ 스케일 바 업데이트 불가: 지도 또는 UI 요소 미초기화")
             return
         }
@@ -339,7 +323,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 1. 현재 화면 너비에 해당하는 실제 거리 계산
         let mapBounds = mapView.bounds
         let screenWidthPoints = mapBounds.width
-        // 화면 중앙 좌우 끝점의 좌표 계산
         let leftCenterPoint = CGPoint(x: mapBounds.minX, y: mapBounds.midY)
         let rightCenterPoint = CGPoint(x: mapBounds.maxX, y: mapBounds.midY)
         let leftCoord = projection.coordinate(for: leftCenterPoint)
@@ -347,7 +330,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 유효한 좌표인지 확인 (지도가 완전히 로드되지 않았을 수 있음)
         guard CLLocationCoordinate2DIsValid(leftCoord), CLLocationCoordinate2DIsValid(rightCoord) else {
-            //print("⚠️ 유효하지 않은 좌표, 스케일 바 업데이트 건너뜀")
             return
         }
         
@@ -355,7 +337,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 화면 포인트당 실제 미터 계산 (0으로 나누기 방지)
         guard horizontalDistanceMeters > 0, screenWidthPoints > 0 else {
-             //print("⚠️ 거리 또는 너비가 0, 스케일 바 업데이트 건너뜀")
             return
         }
         let pointsPerMeter = Double(screenWidthPoints) / horizontalDistanceMeters
@@ -379,9 +360,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             displayText = "\(Int(displayDistance)) m"
         }
         
-        // print("📊 스케일 바 업데이트: \(displayText), 막대 길이: \(actualBarLengthPoints)pt")
-        
-        // 6. UI 업데이트 (메인 스레드)
+        // UI 업데이트 (메인 스레드)
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             
@@ -389,24 +368,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             scaleBarLabel.text = displayText
             
             // 스케일 바 라인 너비 업데이트
-            // 기존 너비 제약 조건 찾아서 비활성화 및 제거 (더 안전한 방식)
             if let existingConstraint = scaleBarLine.constraints.first(where: { $0.firstAttribute == .width }) {
                 existingConstraint.isActive = false
                 scaleBarLine.removeConstraint(existingConstraint)
             }
             let newLineConstraint = scaleBarLine.widthAnchor.constraint(equalToConstant: CGFloat(actualBarLengthPoints))
             newLineConstraint.isActive = true
-            
-            // 스케일 바 컨테이너 너비 업데이트
-            if let existingContainerConstraint = scaleBarView.constraints.first(where: { $0.firstAttribute == .width }) {
-                existingContainerConstraint.isActive = false
-                scaleBarView.removeConstraint(existingContainerConstraint)
-            }
-            let newContainerConstraint = scaleBarView.widthAnchor.constraint(equalToConstant: CGFloat(actualBarLengthPoints))
-            newContainerConstraint.isActive = true
-            
-            // 레이아웃 업데이트 요청
-            // self.view.layoutIfNeeded() // KVO에서 너무 자주 호출될 수 있으므로 주석 처리, 필요시 활성화
         }
     }
     
@@ -431,48 +398,20 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 카메라 이동이 완료된 후 호출
     func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
-        // 줌 레벨에 따라 실제 검색 반경 업데이트
-        let zoomLevel = position.zoom
-        updateRadiusBasedOnZoom(zoomLevel)
+        // 디버깅용: 줌 레벨 변경 시 보이는 반경 확인
+        debugCheckVisibleRadius()
         
-        // KVO가 스케일 바 업데이트를 처리하므로 여기서는 호출 안 함
-        // updateScaleBar()
+        // 스케일 바 업데이트
+        updateScaleBar()
         
         // 디버깅용
-        print("📏 줌 레벨 완료: \(zoomLevel), 검색 반경 설정: \(searchRadius)")
+        print("📏 줌 레벨 변경: \(position.zoom)")
     }
     
     // 지도 로드 완료 시 호출
     func mapViewDidFinishTileRendering(_ mapView: GMSMapView) {
-        // KVO가 viewWillAppear에서 초기 업데이트를 처리하므로 여기서는 호출 안 함
-        // updateScaleBar()
+        // 지도 타일 렌더링 완료
         print("🗺️ 지도 타일 렌더링 완료")
-    }
-    
-    // 줌 레벨에 따라 반경 업데이트
-    private func updateRadiusBasedOnZoom(_ zoomLevel: Float) {
-        if zoomLevel >= 10 && zoomLevel <= 18 {
-            let newRadius = calculateRadiusFromZoom(zoomLevel)
-            // 민감도 임계값을 작게 설정하여 작은 변화도 반영되도록 함
-            if abs(newRadius - searchRadius) > 0.1 { 
-                searchRadius = newRadius
-                print("🔄 반경 업데이트: \(searchRadius)")
-            }
-        }
-    }
-    
-    // 줌 레벨에 따른 반경 계산 함수
-    private func calculateRadiusFromZoom(_ zoom: Float) -> Double {
-        // 줌 레벨에 따른 반경 계산 (18: 300m, 10: 3000m 사이의 값)
-        // zoom이 18일 때 300, 10일 때 3000이 되도록 선형 계산
-        let zoomRange: Double = 8.0 // 18 - 10
-        let radiusRange: Double = 2700.0 // 3000 - 300
-        
-        let zoomFactor = Double(18.0 - zoom) / zoomRange
-        let radius = 300.0 + (zoomFactor * radiusRange)
-        
-        // 소수점 아래 1자리까지만 사용하여 안정성 향상
-        return Double(round(radius * 10) / 10)
     }
     
     // Google 로고 위치 조정
@@ -527,6 +466,77 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         return nil
     }
+    
+    // 검색 반경 설정 (버튼 클릭에 대응하는 함수)
+    func setSearchRadius(_ radius: Double) {
+        print("🎯 지도 검색 반경 설정: \(radius)m, 기존: \(searchRadius)m")
+        
+        // 반경이 변경되었을 경우에만 처리
+        if abs(searchRadius - radius) > 0.1 {
+            // 검색 반경 설정
+            self.searchRadius = radius
+            
+            // 선택된 반경에 맞는 줌 레벨로 지도 조정
+            adjustZoomToFitRadius(radius)
+        }
+    }
+    
+    // 반경에 맞게 지도 줌 레벨 조정
+    private func adjustZoomToFitRadius(_ radius: Double) {
+        guard let location = currentLocation else { 
+            print("⚠️ 현재 위치 정보 없어 줌 조정 실패")
+            return 
+        }
+        
+        // 반경에 따른 적절한 줌 레벨 계산 - Google Maps 특성상 각 값 미세 조정
+        var zoomLevel: Float
+        
+        switch radius {
+        case ...300:
+            zoomLevel = 16.0 // 300m
+        case ...500:
+            zoomLevel = 15.0 // 500m 
+        case ...1000:
+            zoomLevel = 14.0 // 1km
+        case ...2000:
+            zoomLevel = 13.0 // 2km
+        case ...3000:
+            zoomLevel = 12.0 // 3km
+        default:
+            zoomLevel = 11.0 // 3km 초과
+        }
+        
+        print("🔍 반경 \(radius)m에 맞게 줌 레벨 조정: \(zoomLevel)")
+        
+        // 애니메이션과 함께 카메라 이동 - 현재 위치 중심
+        let cameraUpdate = GMSCameraUpdate.setTarget(location.coordinate, zoom: zoomLevel)
+        mapView.animate(with: cameraUpdate)
+        
+        // 실제 화면에 표시되는 반경 확인 - 디버깅용
+        debugCheckVisibleRadius()
+    }
+    
+    // 디버깅용: 실제 화면에 표시되는 반경 체크
+    private func debugCheckVisibleRadius() {
+        guard let mapView = self.mapView,
+              let location = currentLocation else { return }
+        
+        let projection = mapView.projection
+        let center = location.coordinate
+        let centerPoint = projection.point(for: center)
+        
+        // 화면 가로 끝까지의 실제 거리 계산
+        let rightEdgePoint = CGPoint(x: mapView.bounds.maxX, y: centerPoint.y)
+        let rightEdgeCoord = projection.coordinate(for: rightEdgePoint)
+        let visibleRadius = GMSGeometryDistance(center, rightEdgeCoord)
+        
+        print("📏 화면에 보이는 실제 반경: \(Int(visibleRadius))m (설정된 반경: \(Int(searchRadius))m)")
+    }
+    
+    // NativeMapView에서 반경 버튼 클릭 시 호출될 메서드
+    func handleRadiusButtonTap(radius: Double) {
+        setSearchRadius(radius)
+    }
 }
 
 // 패딩이 있는 라벨 클래스 (UILabel 확장 대신 서브클래스 사용)
@@ -563,6 +573,7 @@ struct NativeMapView: UIViewControllerRepresentable {
     // 선택된 반경 바인딩
     @Binding var selectedRadius: Double
     
+    // UIViewController 생성
     func makeUIViewController(context: Context) -> MapViewController {
         let viewController = MapViewController()
         viewController.currentLocation = mapLocation
@@ -570,14 +581,20 @@ struct NativeMapView: UIViewControllerRepresentable {
         return viewController
     }
     
+    // UIViewController 업데이트
     func updateUIViewController(_ uiViewController: MapViewController, context: Context) {
+        // 위치 업데이트
         if let location = mapLocation {
-            uiViewController.updateLocation(location)
+            if uiViewController.currentLocation?.coordinate.latitude != location.coordinate.latitude ||
+               uiViewController.currentLocation?.coordinate.longitude != location.coordinate.longitude {
+                uiViewController.updateLocation(location)
+            }
         }
         
-        // 선택된 반경 업데이트
-        if uiViewController.searchRadius != selectedRadius {
-            uiViewController.updateSearchRadius(selectedRadius)
+        // 반경 업데이트
+        if abs(uiViewController.searchRadius - selectedRadius) > 0.1 {
+            print("⚡️ NativeMapView: 반경 변경 감지 \(uiViewController.searchRadius) -> \(selectedRadius)")
+            uiViewController.searchRadius = selectedRadius
         }
     }
 } 

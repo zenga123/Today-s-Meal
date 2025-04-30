@@ -8,17 +8,28 @@ class RestaurantViewModel: ObservableObject {
     @Published var selectedRestaurant: Restaurant?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var searchRadius: Double = 3
+    @Published var searchRadius: Double = 1000 // 기본값 1000m
     @Published var showMapView = false // 지도 보기/목록 보기 토글
     
-    // Search range options (in kilometers) as defined by API
+    // Search range options with actual meter values
     let rangeOptions = [
-        (label: "300m", value: 1),
-        (label: "500m", value: 2),
-        (label: "1000m", value: 3),
-        (label: "2000m", value: 4),
-        (label: "3000m", value: 5)
+        (label: "300m", value: 300),
+        (label: "500m", value: 500),
+        (label: "1000m", value: 1000),
+        (label: "2000m", value: 2000),
+        (label: "3000m", value: 3000)
     ]
+    
+    // API range values mapping
+    private func getAPIRangeValue(forMeters meters: Double) -> Int {
+        switch meters {
+        case ...300: return 1
+        case ...500: return 2
+        case ...1000: return 3
+        case ...2000: return 4
+        default: return 5
+        }
+    }
     
     // Current location
     var currentLocation: CLLocation?
@@ -29,8 +40,10 @@ class RestaurantViewModel: ObservableObject {
         isLoading = true
         errorMessage = nil
         
-        // Get range value from selected radius
-        let rangeValue = rangeOptions.first { $0.label == "\(Int(searchRadius))km" }?.value ?? 3
+        // Get API range value from selected radius
+        let rangeValue = getAPIRangeValue(forMeters: searchRadius)
+        
+        print("🔍 API 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
         
         RestaurantAPI.shared.searchRestaurants(lat: lat, lng: lng, range: rangeValue)
             .receive(on: DispatchQueue.main)

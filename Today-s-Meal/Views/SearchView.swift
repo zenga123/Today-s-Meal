@@ -206,7 +206,7 @@ struct SearchView: View {
                 let newRadius = Double(viewModel.rangeOptions[newValue].value)
                 viewModel.searchRadius = newRadius
                 searchRadius = newRadius // 지도에 표시될 반경 업데이트
-                print("검색 반경 변경: \(newRadius)m")
+                print("🔄 검색 반경 버튼 클릭: \(newRadius)m (인덱스: \(newValue))")
             }
             .onChange(of: searchRadius) { newRadius in
                 // 지도에서 변경된 반경에 따라 선택 영역 업데이트
