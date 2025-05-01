@@ -162,7 +162,7 @@ struct SearchView: View {
             }
             .preferredColorScheme(.dark) // 다크 모드 강제 적용
             .navigationDestination(isPresented: $navigateToResults) {
-                ResultsView(restaurants: viewModel.restaurants)
+                ResultsView(restaurants: viewModel.restaurants, searchRadius: searchRadius)
                     .environmentObject(locationService)
             }
             .onAppear {

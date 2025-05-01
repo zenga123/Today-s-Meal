@@ -3,11 +3,17 @@ import MapKit
 
 struct ResultsView: View {
     let restaurants: [Restaurant]
+    let searchRadius: Double
     @State private var selectedRestaurant: Restaurant?
     @State private var navigateToDetail = false
     @State private var showMapView = false
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var locationService: LocationService
+    
+    init(restaurants: [Restaurant], searchRadius: Double = 1000) {
+        self.restaurants = restaurants
+        self.searchRadius = searchRadius
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -39,8 +45,12 @@ struct ResultsView: View {
             } else {
                 if showMapView {
                     // 지도 뷰
-                    RestaurantMapView(restaurants: restaurants, userLocation: locationService.currentLocation)
-                        .edgesIgnoringSafeArea(.bottom)
+                    RestaurantMapView(
+                        restaurants: restaurants, 
+                        userLocation: locationService.currentLocation,
+                        searchRadius: searchRadius
+                    )
+                    .edgesIgnoringSafeArea(.bottom)
                 } else {
                     // 리스트 뷰
                     restaurantListView

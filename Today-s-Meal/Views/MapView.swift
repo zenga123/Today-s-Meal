@@ -3,6 +3,7 @@ import GoogleMaps
 
 struct RestaurantMapView: View {
     var restaurants: [Restaurant]
+    var searchRadius: Double = 1000 // 기본값 1000m 
     @State private var selectedRestaurant: Restaurant?
     @State private var selectedRestaurantID: String? = nil
     
@@ -10,8 +11,9 @@ struct RestaurantMapView: View {
     @StateObject private var mapViewCoordinator = MapViewCoordinator()
     
     // 초기 위치 설정
-    init(restaurants: [Restaurant], userLocation: CLLocation?) {
+    init(restaurants: [Restaurant], userLocation: CLLocation?, searchRadius: Double = 1000) {
         self.restaurants = restaurants
+        self.searchRadius = searchRadius
         
         // 사용자 위치 또는 기본 위치 설정
         if let userLocation = userLocation {
@@ -68,6 +70,7 @@ struct RestaurantMapView: View {
         .onAppear {
             // 모든 음식점 마커 추가
             mapViewCoordinator.restaurants = restaurants
+            mapViewCoordinator.searchRadius = searchRadius
         }
         .onChange(of: selectedRestaurantID) { newID in
             // ID가 변경되면 해당 Restaurant 객체를 찾아 업데이트
@@ -147,8 +150,10 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
     var centerLocation: CLLocation = CLLocation(latitude: 35.6812, longitude: 139.7671) // 도쿄 기본값
     var updateMapCenter: Bool = false
     var selectedRestaurantID: String?
+    var searchRadius: Double = 1000 // 기본값 1000m
     var onMarkerTapped: ((String) -> Void)?
     private var markers: [String: GMSMarker] = [:]
+    private var radiusCircle: GMSCircle?
     
     // 마커 업데이트
     func updateMarkers() {
@@ -157,6 +162,14 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         // 기존 마커 제거
         mapView.clear()
         markers.removeAll()
+        
+        // 검색 반경 원 추가
+        let circle = GMSCircle(position: centerLocation.coordinate, radius: CLLocationDistance(searchRadius))
+        circle.fillColor = UIColor(red: 0, green: 0, blue: 1, alpha: 0.1)
+        circle.strokeColor = UIColor(red: 0, green: 0, blue: 1, alpha: 0.5)
+        circle.strokeWidth = 1
+        circle.map = mapView
+        radiusCircle = circle
         
         // 각 음식점에 마커 추가
         for restaurant in restaurants {

@@ -74,6 +74,12 @@ class RestaurantViewModel: ObservableObject {
                     return updatedRestaurant
                 }
                 
+                // 선택한 검색 반경 내의 식당만 필터링
+                updatedRestaurants = updatedRestaurants.filter { restaurant in
+                    guard let distance = restaurant.distance else { return false }
+                    return Double(distance) <= self.searchRadius
+                }
+                
                 // 거리순으로 정렬
                 updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
                 
