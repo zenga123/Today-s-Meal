@@ -11,7 +11,6 @@ struct SearchView: View {
     @State private var selectedRangeIndex = 2 // Default to 1000m
     @State private var searchRadius: Double = 1000 // 기본 반경 1000m
     @State private var showLocationPermissionAlert = false
-    @State private var showDebugActions = false // 디버그 액션 상태
     
     var body: some View {
         NavigationStack {
@@ -30,43 +29,20 @@ struct SearchView: View {
                     
                     Spacer()
                     
-                    // 디버그 버튼 (3번 탭하면 표시)
-                    Button(action: {
-                        showDebugActions.toggle()
-                        print("디버그 모드: \(showDebugActions ? "활성화" : "비활성화")")
-                    }) {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.title2)
+                    // 위치 상태 컴팩트 표시
+                    HStack(spacing: 4) {
+                        Image(systemName: locationSymbol)
+                            .foregroundColor(locationColor)
+                        Text(locationStatusCompact)
+                            .font(.caption)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(10)
                 }
                 .padding(.horizontal)
                 .padding(.vertical, 10)
-                
-                // 디버그 액션 패널
-                if showDebugActions {
-                    VStack(spacing: 8) {
-                        Text("디버그 패널")
-                            .font(.subheadline.bold())
-                        
-                        Button("Google Maps 재초기화") {
-                            // Google Maps 직접 초기화
-                            let apiKey = "AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8"
-                            GMSServices.provideAPIKey(apiKey)
-                            print("🗺️ Google Maps API 키 재설정: \(apiKey)")
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        Button("위치 서비스 강제 갱신") {
-                            locationService.requestLocationPermission()
-                            print("위치 서비스 강제 갱신 요청")
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                }
                 
                 // 지도 표시 - 전체 화면 너비로 설정
                 ZStack {
@@ -89,10 +65,6 @@ struct SearchView: View {
                     }
                 }
                 .edgesIgnoringSafeArea(.horizontal)
-                
-                // Location status
-                locationStatusView
-                    .padding(.top, 16)
                 
                 // 위치 권한 요청 버튼 (위치 권한이 없을 때만 표시)
                 if locationService.authorizationStatus == .notDetermined || 
@@ -233,25 +205,6 @@ struct SearchView: View {
         }
     }
     
-    private var locationStatusView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("위치 상태")
-                .font(.headline)
-            
-            HStack {
-                Image(systemName: locationSymbol)
-                    .foregroundColor(locationColor)
-                
-                Text(locationStatusText)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
-        }
-        .padding(.horizontal)
-    }
-    
     private var locationSymbol: String {
         switch locationService.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
@@ -274,20 +227,20 @@ struct SearchView: View {
         }
     }
     
-    private var locationStatusText: String {
+    private var locationStatusCompact: String {
         switch locationService.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             if locationService.currentLocation != nil {
                 return "위치 확인됨"
             } else {
-                return "위치 확인 중..."
+                return "확인 중"
             }
         case .denied, .restricted:
-            return "위치 접근 거부됨. 설정에서 권한을 활성화해주세요."
+            return "권한 필요"
         case .notDetermined:
-            return "위치 권한이 결정되지 않았습니다."
+            return "권한 필요"
         @unknown default:
-            return "알 수 없는 위치 상태."
+            return "오류"
         }
     }
     
