@@ -989,6 +989,11 @@ struct NativeMapView: UIViewControllerRepresentable {
         if abs(uiViewController.searchRadius - selectedRadius) > 0.1 {
             print("⚡️ NativeMapView: 반경 변경 감지 \(uiViewController.searchRadius) -> \(selectedRadius)")
             uiViewController.setSearchRadius(selectedRadius)
+            
+            // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
+            if autoSearch {
+                uiViewController.searchRestaurants()
+            }
         }
         
         // 검색 결과 콜백 업데이트
