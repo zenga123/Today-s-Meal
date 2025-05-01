@@ -133,24 +133,6 @@ struct SearchView: View {
                 .padding(.horizontal)
                 .padding(.top, 16)
                 
-                // Search button
-                Button(action: {
-                    navigateToResults = true  // 결과 화면으로 바로 이동
-                }) {
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                        Text("검색 결과 보기")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.orange)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .padding(.horizontal)
-                .padding(.top, 16)
-                .disabled(locationService.currentLocation == nil || viewModel.restaurants.isEmpty)
-                
                 // Error message
                 if let errorMessage = viewModel.errorMessage {
                     Text(errorMessage)

@@ -58,6 +58,15 @@ class RestaurantViewModel: ObservableObject {
                     return
                 }
                 
+                print("📍 API 응답: \(restaurants.count)개 음식점 데이터 수신 (검색 반경: \(self.searchRadius)m)")
+                
+                // API 응답이 너무 적을 경우 (10개 미만), 1km 이상인 경우에 대해서는 강제로 모든 식당을 포함시킴
+                let shouldIgnoreFiltering = self.searchRadius >= 1000 && restaurants.count < 10
+                
+                if shouldIgnoreFiltering {
+                    print("⚠️ API 응답이 적어 필터링을 건너뜁니다. 모든 식당을 표시합니다.")
+                }
+                
                 // 사용자 위치 정보와 각 음식점까지의 거리 계산
                 var updatedRestaurants = restaurants
                 updatedRestaurants = updatedRestaurants.map { restaurant in
@@ -75,10 +84,19 @@ class RestaurantViewModel: ObservableObject {
                 }
                 
                 // 선택한 검색 반경 내의 식당만 필터링
-                updatedRestaurants = updatedRestaurants.filter { restaurant in
-                    guard let distance = restaurant.distance else { return false }
-                    return Double(distance) <= self.searchRadius
+                let beforeFilterCount = updatedRestaurants.count
+                
+                // 결과가 너무 적거나 범위가 큰 경우 필터링 건너뜀
+                if !shouldIgnoreFiltering {
+                    updatedRestaurants = updatedRestaurants.filter { restaurant in
+                        guard let distance = restaurant.distance else { return false }
+                        return Double(distance) <= self.searchRadius
+                    }
                 }
+                
+                let afterFilterCount = updatedRestaurants.count
+                
+                print("🔍 필터링 결과: \(beforeFilterCount)개 중 \(afterFilterCount)개 남음 (범위: \(self.searchRadius)m)")
                 
                 // 거리순으로 정렬
                 updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }

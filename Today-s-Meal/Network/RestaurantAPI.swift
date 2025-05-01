@@ -95,11 +95,11 @@ class RestaurantAPI {
         // 반경에 따라 식당 수 조정 (범위가 넓을수록 더 많은 식당)
         let restaurantCount: Int
         switch range {
-        case 1: restaurantCount = min(count, 5)  // 300m
-        case 2: restaurantCount = min(count, 10) // 500m
-        case 3: restaurantCount = min(count, 15) // 1km
-        case 4: restaurantCount = min(count, 20) // 2km
-        default: restaurantCount = min(count, 30) // 3km 이상
+        case 1: restaurantCount = min(count, 20)  // 300m
+        case 2: restaurantCount = min(count, 30) // 500m
+        case 3: restaurantCount = min(count, 50) // 1km
+        case 4: restaurantCount = min(count, 70) // 2km
+        default: restaurantCount = min(count, 100) // 3km 이상
         }
         
         // 지정된 범위(미터) 내에서 무작위로 좌표 생성
@@ -124,6 +124,17 @@ class RestaurantAPI {
     func searchRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[Restaurant], APIError> {
         print("🔍 핫페퍼 API로 실제 식당 데이터 검색 중: 위도 \(lat), 경도 \(lng), 범위 \(range)")
         
+        // 범위에 따라 요청할 식당 수 동적으로 조정
+        let adjustedCount: Int
+        switch range {
+        case 1: adjustedCount = 20  // 300m
+        case 2: adjustedCount = 30  // 500m
+        case 3: adjustedCount = 50  // 1km
+        case 4: adjustedCount = 70  // 2km
+        case 5: adjustedCount = 100 // 3km
+        default: adjustedCount = 30
+        }
+        
         var components = URLComponents(string: baseURL)
         
         components?.queryItems = [
@@ -132,7 +143,7 @@ class RestaurantAPI {
             URLQueryItem(name: "lng", value: String(lng)),
             URLQueryItem(name: "range", value: String(range)),
             URLQueryItem(name: "start", value: String(start)),
-            URLQueryItem(name: "count", value: String(count)),
+            URLQueryItem(name: "count", value: String(adjustedCount)), // 동적으로 조정된 수 사용
             URLQueryItem(name: "format", value: "json")
         ]
         
