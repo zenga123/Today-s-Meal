@@ -11,140 +11,200 @@ struct SearchView: View {
     @State private var selectedRangeIndex = 2 // Default to 1000m
     @State private var searchRadius: Double = 1000 // 기본 반경 1000m
     @State private var showLocationPermissionAlert = false
+    @State private var selectedTheme: String? = nil // 선택된 테마
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // App logo/header
-                HStack {
-                    Image(systemName: "fork.knife.circle.fill")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 60, height: 60)
-                        .foregroundColor(.orange)
+            ScrollView {
+                VStack(spacing: 0) {
+                    // App logo/header
+                    HStack {
+                        Image(systemName: "fork.knife.circle.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .foregroundColor(.orange)
+                        
+                        Text("오늘의 식사")
+                            .font(.title)
+                            .fontWeight(.bold)
+                        
+                        Spacer()
+                        
+                        // 위치 상태 컴팩트 표시
+                        HStack(spacing: 4) {
+                            Image(systemName: locationSymbol)
+                                .foregroundColor(locationColor)
+                            Text(locationStatusCompact)
+                                .font(.caption)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
                     
-                    Text("오늘의 식사")
-                        .font(.title)
-                        .fontWeight(.bold)
+                    // 지도 표시 - 전체 화면 너비로 설정
+                    ZStack {
+                        // 새로운 네이티브 지도 뷰 사용
+                        NativeMapView(
+                            mapLocation: $locationService.currentLocation,
+                            selectedRadius: $searchRadius,
+                            autoSearch: true,  // 자동 검색 활성화
+                            onSearchResults: { restaurants in
+                                // 지도에서 검색된 식당 결과를 뷰모델에 설정
+                                viewModel.restaurants = restaurants
+                                
+                                // 로딩 상태 업데이트 (만약 로딩 UI가 있다면)
+                                viewModel.isLoading = false
+                                
+                                print("🔍 지도에서 식당 \(restaurants.count)개 검색됨")
+                            }
+                        )
+                        .frame(height: 250)
+                        .clipped()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 0)
+                                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        )
+                        
+                        if locationService.currentLocation == nil {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .scaleEffect(1.5)
+                        }
+                    }
+                    .edgesIgnoringSafeArea(.horizontal)
                     
-                    Spacer()
+                    // 위치 권한 요청 버튼 (위치 권한이 없을 때만 표시)
+                    if locationService.authorizationStatus == .notDetermined || 
+                       locationService.authorizationStatus == .denied || 
+                       locationService.authorizationStatus == .restricted {
+                        Button(action: {
+                            // 권한 요청
+                            locationService.requestLocationPermission()
+                            showLocationPermissionAlert = true
+                        }) {
+                            HStack {
+                                Image(systemName: "location.circle.fill")
+                                Text("위치 권한 요청하기")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        
+                        Button(action: {
+                            // 설정으로 바로 이동
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "gear")
+                                Text("설정에서 위치 권한 활성화")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                    }
                     
-                    // 위치 상태 컴팩트 표시
-                    HStack(spacing: 4) {
-                        Image(systemName: locationSymbol)
-                            .foregroundColor(locationColor)
-                        Text(locationStatusCompact)
+                    // Search radius picker
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("검색 반경")
+                            .font(.headline)
+                        
+                        Picker("검색 반경", selection: $selectedRangeIndex) {
+                            ForEach(0..<viewModel.rangeOptions.count, id: \.self) { index in
+                                Text(viewModel.rangeOptions[index].label)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 16)
+                    
+                    // 음식 테마 그리드
+                    VStack(alignment: .leading, spacing: 8) {
+                        // 제목 및 설명
+                        Text("음식 테마")
+                            .font(.headline)
+                        
+                        Text("아래 영역에 이미지 15개를 적용할 수 있습니다")
                             .font(.caption)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(10)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                
-                // 지도 표시 - 전체 화면 너비로 설정
-                ZStack {
-                    // 새로운 네이티브 지도 뷰 사용
-                    NativeMapView(
-                        mapLocation: $locationService.currentLocation,
-                        selectedRadius: $searchRadius,
-                        autoSearch: true,  // 자동 검색 활성화
-                        onSearchResults: { restaurants in
-                            // 지도에서 검색된 식당 결과를 뷰모델에 설정
-                            viewModel.restaurants = restaurants
-                            
-                            // 로딩 상태 업데이트 (만약 로딩 UI가 있다면)
-                            viewModel.isLoading = false
-                            
-                            print("🔍 지도에서 식당 \(restaurants.count)개 검색됨")
+                            .foregroundColor(.gray)
+                            .padding(.bottom, 8)
+                        
+                        // 첫 번째 줄
+                        HStack(spacing: 12) {
+                            // 예시: 첫 번째 칸에는 실제 아이템 표시
+                            FoodCategoryItem(imageName: "bowl.fill", label: "한식")
+                            FoodCategoryItem(imageName: "fish.fill", label: "일식")
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
                         }
-                    )
-                    .frame(height: 250)
-                    .clipped()
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 0)
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-                    )
-                    
-                    if locationService.currentLocation == nil {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle())
-                            .scaleEffect(1.5)
-                    }
-                }
-                .edgesIgnoringSafeArea(.horizontal)
-                
-                // 위치 권한 요청 버튼 (위치 권한이 없을 때만 표시)
-                if locationService.authorizationStatus == .notDetermined || 
-                   locationService.authorizationStatus == .denied || 
-                   locationService.authorizationStatus == .restricted {
-                    Button(action: {
-                        // 권한 요청
-                        locationService.requestLocationPermission()
-                        showLocationPermissionAlert = true
-                    }) {
-                        HStack {
-                            Image(systemName: "location.circle.fill")
-                            Text("위치 권한 요청하기")
+                        .padding(.bottom, 12)
+                        
+                        // 두 번째 줄
+                        HStack(spacing: 12) {
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryItem(imageName: "wineglass.fill", label: "주점")
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        .padding(.bottom, 12)
+                        
+                        // 세 번째 줄
+                        HStack(spacing: 12) {
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
+                        }
+                        .padding(.bottom, 12)
+                        
+                        // 네 번째 줄 (3개)
+                        HStack(spacing: 12) {
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
+                            FoodCategoryImagePlaceholder()
+                            Spacer() // 빈 공간
+                        }
+                        
+                        // 사용 방법 안내
+                        Text("* 이미지 추가 방법: Assets.xcassets에 각 음식 카테고리별 이미지를 추가한 후, 코드의 플레이스홀더를 FoodCategoryItem으로 대체하면 됩니다.")
+                            .font(.caption2)
+                            .foregroundColor(.gray)
+                            .padding(.top, 8)
                     }
                     .padding(.horizontal)
-                    .padding(.top, 8)
+                    .padding(.top, 16)
                     
-                    Button(action: {
-                        // 설정으로 바로 이동
-                        if let url = URL(string: UIApplication.openSettingsURLString) {
-                            UIApplication.shared.open(url)
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "gear")
-                            Text("설정에서 위치 권한 활성화")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.gray)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    // Error message
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .padding()
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                }
-                
-                // Search radius picker
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("검색 반경")
-                        .font(.headline)
                     
-                    Picker("검색 반경", selection: $selectedRangeIndex) {
-                        ForEach(0..<viewModel.rangeOptions.count, id: \.self) { index in
-                            Text(viewModel.rangeOptions[index].label)
-                        }
-                    }
-                    .pickerStyle(SegmentedPickerStyle())
+                    // 하단에 여백 추가
+                    Spacer(minLength: 30)
                 }
-                .padding(.horizontal)
-                .padding(.top, 16)
-                
-                // Error message
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-                
-                Spacer()
             }
             .preferredColorScheme(.dark) // 다크 모드 강제 적용
             .navigationDestination(isPresented: $navigateToResults) {
-                ResultsView(restaurants: viewModel.restaurants, searchRadius: searchRadius)
+                ResultsView(restaurants: viewModel.restaurants, searchRadius: searchRadius, theme: selectedTheme)
                     .environmentObject(locationService)
             }
             .onAppear {
@@ -256,5 +316,123 @@ struct SearchView: View {
         )
         
         navigateToResults = true
+    }
+}
+
+// 음식 테마 버튼 컴포넌트
+struct FoodThemeButton: View {
+    let image: String
+    let text: String
+    let color: Color
+    @Binding var selectedTheme: String?
+    
+    var isSelected: Bool {
+        selectedTheme == text
+    }
+    
+    var body: some View {
+        Button(action: {
+            // 이미 선택된 테마를 다시 누르면 선택 해제
+            if isSelected {
+                selectedTheme = nil
+            } else {
+                selectedTheme = text
+            }
+            print("선택된 테마: \(selectedTheme ?? "없음")")
+        }) {
+            VStack {
+                Image(systemName: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 36, height: 36)
+                    .foregroundColor(.white)
+                    .padding(8)
+                
+                Text(text)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.bottom, 8)
+            }
+            .frame(maxWidth: .infinity)
+            .background(isSelected ? color : color.opacity(0.7))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? Color.white : Color.clear, lineWidth: 2)
+            )
+            .cornerRadius(12)
+            .scaleEffect(isSelected ? 1.05 : 1.0)
+            .shadow(color: isSelected ? Color.black.opacity(0.3) : Color.clear, radius: 3, x: 0, y: 2)
+            .animation(.spring(), value: isSelected)
+        }
+    }
+}
+
+// 음식 테마 이미지 플레이스홀더 컴포넌트
+struct FoodCategoryImagePlaceholder: View {
+    var body: some View {
+        ZStack {
+            Rectangle()
+                .frame(width: 80, height: 80)
+                .foregroundColor(Color.gray.opacity(0.15))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+            
+            VStack(spacing: 4) {
+                Image(systemName: "photo")
+                    .font(.system(size: 24))
+                    .foregroundColor(Color.gray.opacity(0.7))
+                
+                Text("이미지")
+                    .font(.caption2)
+                    .foregroundColor(Color.gray.opacity(0.7))
+            }
+        }
+        .frame(width: 80, height: 80)
+    }
+}
+
+// 실제 음식 카테고리 아이템 (이미지가 있는 경우)
+struct FoodCategoryItem: View {
+    let imageName: String
+    let label: String
+    let useCustomImage: Bool
+    
+    init(imageName: String, label: String, useCustomImage: Bool = false) {
+        self.imageName = imageName
+        self.label = label
+        self.useCustomImage = useCustomImage
+    }
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            if useCustomImage {
+                // 사용자 제공 이미지 표시 (Assets에서 불러옴)
+                // 실제 앱에서는 사용자가 추가한 이미지 파일을 사용
+                Image(imageName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else {
+                // 임시 시스템 이미지 사용
+                Image(systemName: imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40, height: 40)
+                    .padding(10)
+                    .background(Circle().fill(Color.orange.opacity(0.2)))
+                    .foregroundColor(.orange)
+            }
+            
+            // 카테고리 이름
+            Text(label)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.gray)
+        }
+        .frame(width: 80, height: 80)
     }
 } 

@@ -4,15 +4,17 @@ import MapKit
 struct ResultsView: View {
     let restaurants: [Restaurant]
     let searchRadius: Double
+    let theme: String?
     @State private var selectedRestaurant: Restaurant?
     @State private var navigateToDetail = false
     @State private var showMapView = false
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var locationService: LocationService
     
-    init(restaurants: [Restaurant], searchRadius: Double = 1000) {
+    init(restaurants: [Restaurant], searchRadius: Double = 1000, theme: String? = nil) {
         self.restaurants = restaurants
         self.searchRadius = searchRadius
+        self.theme = theme
     }
     
     var body: some View {
@@ -57,7 +59,7 @@ struct ResultsView: View {
                 }
             }
         }
-        .navigationTitle("검색 결과 (\(restaurants.count))")
+        .navigationTitle(getNavigationTitle())
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $navigateToDetail) {
             if let restaurant = selectedRestaurant {
@@ -120,6 +122,15 @@ struct ResultsView: View {
             }
         }
         .listStyle(PlainListStyle())
+    }
+    
+    private func getNavigationTitle() -> String {
+        let baseTitle = "검색 결과 (\(restaurants.count))"
+        if let theme = theme {
+            return "\(baseTitle) - \(theme)"
+        } else {
+            return baseTitle
+        }
     }
 }
 
