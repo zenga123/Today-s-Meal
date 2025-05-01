@@ -17,8 +17,8 @@ struct FoodThemeSection: View {
             
             // 첫 번째 줄 (1-4)
             HStack(spacing: 12) {
-                // 특별 처리된 이자카야 컴포넌트
-                IzakayaCircle()
+                // 이자카야 이미지 사용
+                EmptyCirclePlaceholder(label: "izakaya", useCustomImage: true)
                 
                 EmptyCirclePlaceholder(label: "ダイニングバー・バル", useCustomImage: false)
                 EmptyCirclePlaceholder(label: "創作料理", useCustomImage: false)
