@@ -119,7 +119,12 @@ struct RestaurantRow: View {
     var body: some View {
         HStack(spacing: 16) {
             // Thumbnail image
-            AsyncImage(url: URL(string: restaurant.photo.mobile.l)) { phase in
+            AsyncImage(url: URL(string: {
+                if let photo = restaurant.photo, let mobile = photo.mobile, let l = mobile.l {
+                    return l
+                }
+                return ""
+            }())) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -148,18 +153,18 @@ struct RestaurantRow: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                Text(restaurant.genre.name)
+                Text(restaurant.genre?.name ?? "장르 정보 없음")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                 
-                Text(restaurant.access)
+                Text(restaurant.access ?? "위치 정보 없음")
                     .font(.caption)
                     .lineLimit(2)
                     .foregroundColor(.secondary)
                 
                 HStack {
                     Image(systemName: "yen.circle.fill")
-                    Text(restaurant.budget.name)
+                    Text(restaurant.budget?.name ?? "가격 정보 없음")
                     
                     if let distance = restaurant.distance {
                         Spacer()

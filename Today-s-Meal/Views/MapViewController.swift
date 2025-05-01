@@ -2,6 +2,7 @@ import UIKit
 import GoogleMaps
 import SwiftUI
 import CoreLocation
+import Combine
 
 // KVO Context
 private var observerContext = 0
@@ -34,6 +35,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 반경 변경을 부모 뷰에 알리기 위한 콜백
     var radiusChangeCallback: ((Double) -> Void)?
     
+    // 검색 결과를 부모 뷰에 알리기 위한 콜백
+    var searchResultsCallback: (([Restaurant]) -> Void)?
+    
     // 프로그램적인 줌 변경 여부 플래그
     private var isProgrammaticZoomChange: Bool = false
     
@@ -51,11 +55,22 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     private var scaleBarLine: UIView!
     private var scaleBarLabel: UILabel!
     
+    // 식당 목록
+    var restaurants: [Restaurant] = [] {
+        didSet {
+            // 식당 목록이 업데이트될 때마다 지도에 표시
+            updateRestaurantMarkers()
+        }
+    }
+    
+    // 마커 관리를 위한 딕셔너리 (식당 ID를 키로 사용)
+    private var restaurantMarkers: [String: GMSMarker] = [:]
+    
     override func loadView() {
         // Google Maps API 키 설정 (코드로 직접 설정)
         GMSServices.provideAPIKey("AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8")
         
-        // 기본 위치 - 서울
+        // 기본 위치 - 서울 (초기값으로 사용, 실제 위치가 업데이트 예정)
         let defaultLocation = CLLocationCoordinate2D(latitude: 37.5665, longitude: 126.9780)
         
         // 지도 옵션 설정
@@ -86,11 +101,15 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         super.viewDidLoad()
         print("✅ MapViewController viewDidLoad 호출됨")
         
-        // 현재 위치로 이동 (있는 경우)
-        moveToCurrentLocation()
-        
-        // 테스트용 마커 추가
-        addTestMarker()
+        // 현재 위치로 이동 (위치 서비스에서 제공하면)
+        if let location = currentLocation {
+            moveToCurrentLocation()
+            
+            // 위치가 있으면 자동으로 검색 실행
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.searchRestaurants()
+            }
+        }
         
         // 스케일 바 설정
         setupScaleBar()
@@ -224,8 +243,29 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 위치 업데이트 메서드
     func updateLocation(_ location: CLLocation) {
+        // 이전 위치와 새 위치 사이의 거리 계산
+        let locationChanged: Bool
+        if let oldLocation = self.currentLocation {
+            let distance = location.distance(from: oldLocation)
+            locationChanged = distance > 10  // 10m 이상 차이가 있을 때만 위치 변경으로 간주
+            print("🔄 위치 변경: \(distance)m 이동")
+        } else {
+            locationChanged = true
+            print("🔄 최초 위치 설정")
+        }
+        
+        // 위치 업데이트
         self.currentLocation = location
-        moveToCurrentLocation()
+        
+        // 위치가 변경되었거나 처음 위치가 설정된 경우에만 지도 이동
+        if locationChanged {
+            moveToCurrentLocation()
+            
+            // 위치가 변경되면 자동으로 검색 실행
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.searchRestaurants()
+            }
+        }
     }
     
     // 반경 원 업데이트
@@ -717,6 +757,145 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
 
         print("🗺️ 지도 줌 업데이트 완료: 반경 \(searchRadius)m")
     }
+
+    // MARK: - 식당 마커 관련 메서드
+    
+    // 식당 마커 업데이트
+    private func updateRestaurantMarkers() {
+        // 기존 마커 모두 제거
+        clearAllRestaurantMarkers()
+        
+        // 새 마커 추가
+        for restaurant in restaurants {
+            addRestaurantMarker(restaurant)
+        }
+    }
+    
+    // 모든 식당 마커 제거
+    private func clearAllRestaurantMarkers() {
+        for marker in restaurantMarkers.values {
+            marker.map = nil
+        }
+        restaurantMarkers.removeAll()
+    }
+    
+    // 식당 마커 추가
+    private func addRestaurantMarker(_ restaurant: Restaurant) {
+        let position = CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)
+        let marker = GMSMarker(position: position)
+        
+        // 마커 제목 및 스니펫 설정
+        marker.title = restaurant.name
+        marker.snippet = restaurant.catchPhrase
+        
+        // 거리 표시 (옵션)
+        if let distance = restaurant.distance {
+            let distanceText = distance < 1000 ? "\(distance)m" : String(format: "%.1fkm", Double(distance) / 1000.0)
+            marker.snippet = "\(distanceText) - \(restaurant.catchPhrase)"
+        }
+        
+        // 마커 아이콘 커스터마이징 (음식점 아이콘 사용)
+        marker.icon = GMSMarker.markerImage(with: .orange)
+        
+        // 지도에 마커 표시
+        marker.map = mapView
+        
+        // 마커 딕셔너리에 저장
+        restaurantMarkers[restaurant.id] = marker
+    }
+    
+    // 마커 탭 이벤트 처리
+    func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
+        // 마커의 정보 창을 표시
+        return false // false를 반환하면 기본 정보 창이 표시됨
+    }
+    
+    // 식당 검색 실행
+    func searchRestaurants() {
+        guard let location = currentLocation else {
+            print("⚠️ 현재 위치 정보 없어 검색 실패")
+            return
+        }
+        
+        // 검색 진행 중임을 표시
+        // (추가 UI가 필요하면 여기에 구현)
+        
+        // API 반경 값 변환
+        let rangeValue = getAPIRangeValue(forMeters: searchRadius)
+        
+        print("🔍 지도에서 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
+        print("🔍 검색 좌표: 위도 \(location.coordinate.latitude), 경도 \(location.coordinate.longitude)")
+        
+        // API 호출
+        RestaurantAPI.shared.searchRestaurants(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude,
+            range: rangeValue
+        )
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("❌ 검색 오류: \(error.description)")
+                }
+            },
+            receiveValue: { [weak self] restaurants in
+                guard let self = self else { return }
+                
+                print("📍 API 응답: \(restaurants.count)개 음식점 데이터 수신")
+                
+                if restaurants.isEmpty {
+                    print("⚠️ 검색 결과가 없습니다. 현재 위치 주변에 등록된 음식점이 없거나 API 제한이 있을 수 있습니다.")
+                } else {
+                    print("✅ 첫 번째 음식점: \(restaurants.first?.name ?? "없음"), 위치: \(restaurants.first?.lat ?? 0), \(restaurants.first?.lng ?? 0)")
+                }
+                
+                // 거리 계산 및 정렬
+                var updatedRestaurants = restaurants
+                if let userLocation = self.currentLocation {
+                    updatedRestaurants = updatedRestaurants.map { restaurant in
+                        var updatedRestaurant = restaurant
+                        
+                        // 음식점 위치 설정
+                        let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
+                        
+                        // 거리 계산 (미터 단위)
+                        let distanceInMeters = Int(userLocation.distance(from: restaurantLocation))
+                        updatedRestaurant.distance = distanceInMeters
+                        updatedRestaurant.userLocation = userLocation
+                        
+                        return updatedRestaurant
+                    }
+                    
+                    // 거리순으로 정렬
+                    updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
+                }
+                
+                // 검색 결과 업데이트 (didSet 트리거하여 마커 표시)
+                self.restaurants = updatedRestaurants
+                
+                // 검색 결과 콜백 호출
+                self.searchResultsCallback?(updatedRestaurants)
+                
+                print("✅ 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
+            }
+        )
+        .store(in: &cancellables) // 여기서 cancelables 추가 필요
+    }
+    
+    // 취소 가능한 구독 저장
+    private var cancellables = Set<AnyCancellable>()
+    
+    // API range 값 변환 (미터 -> API 사용 범위 값)
+    private func getAPIRangeValue(forMeters meters: Double) -> Int {
+        switch meters {
+        case ...300: return 1
+        case ...500: return 2
+        case ...1000: return 3
+        case ...2000: return 4
+        default: return 5
+        }
+    }
 }
 
 // 패딩이 있는 라벨 클래스 (UILabel 확장 대신 서브클래스 사용)
@@ -752,6 +931,10 @@ struct NativeMapView: UIViewControllerRepresentable {
     @Binding var mapLocation: CLLocation?
     // 선택된 반경 바인딩
     @Binding var selectedRadius: Double
+    // 자동 검색 여부 (옵션)
+    var autoSearch: Bool = true
+    // 검색 결과 콜백 (옵션)
+    var onSearchResults: (([Restaurant]) -> Void)?
     
     // UIViewController 생성
     func makeUIViewController(context: Context) -> MapViewController {
@@ -764,6 +947,18 @@ struct NativeMapView: UIViewControllerRepresentable {
             // 지도에서 반경이 변경될 때마다 부모 뷰의 상태 업데이트
             DispatchQueue.main.async {
                 selectedRadius = newRadius
+                
+                // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
+                if autoSearch {
+                    viewController.searchRestaurants()
+                }
+            }
+        }
+        
+        // 검색 결과 콜백 설정
+        viewController.searchResultsCallback = { restaurants in
+            DispatchQueue.main.async {
+                onSearchResults?(restaurants)
             }
         }
         
@@ -774,19 +969,35 @@ struct NativeMapView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: MapViewController, context: Context) {
         // 위치 업데이트
         if let location = mapLocation {
-            if uiViewController.currentLocation?.coordinate.latitude != location.coordinate.latitude ||
-               uiViewController.currentLocation?.coordinate.longitude != location.coordinate.longitude {
+            let locationChanged = uiViewController.currentLocation?.coordinate.latitude != location.coordinate.latitude ||
+                                 uiViewController.currentLocation?.coordinate.longitude != location.coordinate.longitude
+            
+            if locationChanged {
                 uiViewController.updateLocation(location)
+                
+                // 자동 검색이 활성화된 경우 위치 변경 시 자동으로 검색 실행
+                if autoSearch {
+                    // 약간의 지연을 줘서 지도가 업데이트된 후 검색하도록 함
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        uiViewController.searchRestaurants()
+                    }
+                }
             }
         }
         
         // 반경 업데이트
         if abs(uiViewController.searchRadius - selectedRadius) > 0.1 {
             print("⚡️ NativeMapView: 반경 변경 감지 \(uiViewController.searchRadius) -> \(selectedRadius)")
-            // --- 수정된 코드 시작 ---
-            // uiViewController.searchRadius = selectedRadius // 제거: 직접 설정 대신 함수 호출
-            uiViewController.setSearchRadius(selectedRadius) // 수정: setSearchRadius 호출
-            // --- 수정된 코드 끝 ---
+            uiViewController.setSearchRadius(selectedRadius)
+        }
+        
+        // 검색 결과 콜백 업데이트
+        if uiViewController.searchResultsCallback == nil && onSearchResults != nil {
+            uiViewController.searchResultsCallback = { restaurants in
+                DispatchQueue.main.async {
+                    onSearchResults?(restaurants)
+                }
+            }
         }
     }
 } 

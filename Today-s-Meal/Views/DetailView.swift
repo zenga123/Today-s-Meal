@@ -37,7 +37,12 @@ struct DetailView: View {
     }
     
     private var imageSection: some View {
-        AsyncImage(url: URL(string: restaurant.photo.pc.l)) { phase in
+        AsyncImage(url: URL(string: {
+            if let photo = restaurant.photo, let pc = photo.pc, let l = pc.l {
+                return l
+            }
+            return ""
+        }())) { phase in
             switch phase {
             case .empty:
                 ProgressView()
@@ -68,7 +73,7 @@ struct DetailView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            Text(restaurant.catchPhrase)
+            Text(restaurant.catchPhrase ?? "")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .padding(.bottom, 4)
@@ -76,21 +81,21 @@ struct DetailView: View {
             HStack {
                 Image(systemName: "mappin.and.ellipse")
                     .foregroundColor(.red)
-                Text(restaurant.address)
+                Text(restaurant.address ?? "주소 정보 없음")
                     .font(.subheadline)
             }
             
             HStack {
                 Image(systemName: "tram.fill")
                     .foregroundColor(.blue)
-                Text(restaurant.access)
+                Text(restaurant.access ?? "접근 정보 없음")
                     .font(.subheadline)
             }
             
             HStack {
                 Image(systemName: "yen.circle.fill")
                     .foregroundColor(.orange)
-                Text("\(restaurant.budget.name) (평균: \(restaurant.budget.average))")
+                Text("\(restaurant.budget?.name ?? "가격 정보 없음") (평균: \(restaurant.budget?.average ?? "정보 없음"))")
                     .font(.subheadline)
             }
         }
@@ -100,22 +105,22 @@ struct DetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeader("상세 정보")
             
-            detailRow(title: "장르", value: restaurant.genre.name)
+            detailRow(title: "장르", value: restaurant.genre?.name ?? "정보 없음")
             
-            detailRow(title: "오픈 시간", value: restaurant.open)
+            detailRow(title: "오픈 시간", value: restaurant.open ?? "정보 없음")
             
-            detailRow(title: "마감 시간", value: restaurant.close)
+            detailRow(title: "마감 시간", value: restaurant.close ?? "정보 없음")
             
-            if !restaurant.wifi.isEmpty {
-                detailRow(title: "와이파이", value: restaurant.wifi)
+            if let wifi = restaurant.wifi, !wifi.isEmpty {
+                detailRow(title: "와이파이", value: wifi)
             }
             
-            if !restaurant.parking.isEmpty {
-                detailRow(title: "주차", value: restaurant.parking)
+            if let parking = restaurant.parking, !parking.isEmpty {
+                detailRow(title: "주차", value: parking)
             }
             
-            if !restaurant.card.isEmpty {
-                detailRow(title: "카드 결제", value: restaurant.card)
+            if let card = restaurant.card, !card.isEmpty {
+                detailRow(title: "카드 결제", value: card)
             }
         }
     }
@@ -136,17 +141,19 @@ struct DetailView: View {
     
     private var actionButtons: some View {
         VStack(spacing: 12) {
-            Link(destination: URL(string: restaurant.urls.pc)!) {
-                HStack {
-                    Image(systemName: "globe")
-                    Text("웹사이트 방문")
-                    Spacer()
-                    Image(systemName: "arrow.right")
+            if let pcUrl = restaurant.urls?.pc, let url = URL(string: pcUrl) {
+                Link(destination: url) {
+                    HStack {
+                        Image(systemName: "globe")
+                        Text("웹사이트 방문")
+                        Spacer()
+                        Image(systemName: "arrow.right")
+                    }
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
                 }
-                .padding()
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(8)
             }
             
             Button(action: {

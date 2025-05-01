@@ -205,7 +205,13 @@ struct RestaurantInfoCard: View {
     var body: some View {
         NavigationLink(destination: DetailView(restaurant: restaurant)) {
             HStack {
-                AsyncImage(url: URL(string: restaurant.photo.mobile.l)) { image in
+                // 옵셔널 체이닝 적용
+                AsyncImage(url: URL(string: {
+                    if let photo = restaurant.photo, let mobile = photo.mobile, let l = mobile.l {
+                        return l
+                    }
+                    return ""
+                }())) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)

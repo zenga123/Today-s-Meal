@@ -88,6 +88,11 @@ class RestaurantViewModel: ObservableObject {
             return
         }
         
+        // 검색 시작 상태 설정
+        isLoading = true
+        errorMessage = nil
+        
+        print("📍 현재 위치로 검색 시작: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         searchRestaurants(lat: location.coordinate.latitude, lng: location.coordinate.longitude)
     }
     

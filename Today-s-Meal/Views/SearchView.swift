@@ -49,7 +49,17 @@ struct SearchView: View {
                     // 새로운 네이티브 지도 뷰 사용
                     NativeMapView(
                         mapLocation: $locationService.currentLocation,
-                        selectedRadius: $searchRadius
+                        selectedRadius: $searchRadius,
+                        autoSearch: true,  // 자동 검색 활성화
+                        onSearchResults: { restaurants in
+                            // 지도에서 검색된 식당 결과를 뷰모델에 설정
+                            viewModel.restaurants = restaurants
+                            
+                            // 로딩 상태 업데이트 (만약 로딩 UI가 있다면)
+                            viewModel.isLoading = false
+                            
+                            print("🔍 지도에서 식당 \(restaurants.count)개 검색됨")
+                        }
                     )
                     .frame(height: 250)
                     .clipped()
@@ -125,11 +135,11 @@ struct SearchView: View {
                 
                 // Search button
                 Button(action: {
-                    searchRestaurants()
+                    navigateToResults = true  // 결과 화면으로 바로 이동
                 }) {
                     HStack {
                         Image(systemName: "magnifyingglass")
-                        Text("주변 맛집 검색")
+                        Text("검색 결과 보기")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -139,7 +149,7 @@ struct SearchView: View {
                 }
                 .padding(.horizontal)
                 .padding(.top, 16)
-                .disabled(locationService.currentLocation == nil)
+                .disabled(locationService.currentLocation == nil || viewModel.restaurants.isEmpty)
                 
                 // Error message
                 if let errorMessage = viewModel.errorMessage {

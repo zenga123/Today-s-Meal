@@ -26,53 +26,53 @@ struct Results: Codable {
 struct Restaurant: Codable, Identifiable {
     let id: String
     let name: String
-    let logoImage: String
-    let nameKana: String
-    let address: String
-    let stationName: String
-    let ktaiCoupon: Int
-    let largeServiceArea: Area
-    let serviceArea: Area
-    let largeArea: Area
-    let middleArea: Area
-    let smallArea: Area
+    let logoImage: String?
+    let nameKana: String?
+    let address: String?
+    let stationName: String?
+    let ktaiCoupon: Int?
+    let largeServiceArea: Area?
+    let serviceArea: Area?
+    let largeArea: Area?
+    let middleArea: Area?
+    let smallArea: Area?
     let lat: Double
     let lng: Double
-    let genre: Genre
-    let subGenre: Genre
-    let budget: Budget
-    let budgetMemo: String
-    let catchPhrase: String
-    let capacity: Int
-    let access: String
-    let mobileAccess: String
-    let urls: URLS
-    let photo: Photo
-    let open: String
-    let close: String
-    let wifi: String
-    let wedding: String
-    let course: String
-    let freeDrink: String
-    let freeFood: String
-    let privateRoom: String
-    let horigotatsu: String
-    let tatami: String
-    let card: String
-    let nonSmoking: String
-    let charter: String
-    let parking: String
-    let barrierFree: String
-    let otherMemo: String
-    let sommelier: String
-    let openAir: String
-    let show: String
-    let karaoke: String
-    let band: String
-    let tv: String
-    let english: String
-    let pet: String
-    let child: String
+    let genre: Genre?
+    let subGenre: Genre?
+    let budget: Budget?
+    let budgetMemo: String?
+    let catchPhrase: String?
+    let capacity: Int?
+    let access: String?
+    let mobileAccess: String?
+    let urls: URLS?
+    let photo: Photo?
+    let open: String?
+    let close: String?
+    let wifi: String?
+    let wedding: String?
+    let course: String?
+    let freeDrink: String?
+    let freeFood: String?
+    let privateRoom: String?
+    let horigotatsu: String?
+    let tatami: String?
+    let card: String?
+    let nonSmoking: String?
+    let charter: String?
+    let parking: String?
+    let barrierFree: String?
+    let otherMemo: String?
+    let sommelier: String?
+    let openAir: String?
+    let show: String?
+    let karaoke: String?
+    let band: String?
+    let tv: String?
+    let english: String?
+    let pet: String?
+    let child: String?
     
     // 지도 관련 추가 속성 (코드에서 설정)
     var distance: Int?
@@ -132,14 +132,14 @@ struct Restaurant: Codable, Identifiable {
 }
 
 struct Area: Codable {
-    let code: String
-    let name: String
+    let code: String?
+    let name: String?
 }
 
 struct Genre: Codable {
-    let code: String
-    let name: String
-    let catchPhrase: String
+    let code: String?
+    let name: String?
+    let catchPhrase: String?
     
     enum CodingKeys: String, CodingKey {
         case code
@@ -149,28 +149,28 @@ struct Genre: Codable {
 }
 
 struct Budget: Codable {
-    let code: String
-    let name: String
-    let average: String
+    let code: String?
+    let name: String?
+    let average: String?
 }
 
 struct URLS: Codable {
-    let pc: String
-    let mobile: String
+    let pc: String?
+    let mobile: String?
 }
 
 struct Photo: Codable {
-    let pc: PC
-    let mobile: Mobile
+    let pc: PC?
+    let mobile: Mobile?
 }
 
 struct PC: Codable {
-    let l: String
-    let m: String
-    let s: String
+    let l: String?
+    let m: String?
+    let s: String?
 }
 
 struct Mobile: Codable {
-    let l: String
-    let s: String
+    let l: String?
+    let s: String?
 } 
