@@ -10,6 +10,9 @@
 		101F17792DBF934700ED17E8 /* GoogleMapsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F17782DBF934700ED17E8 /* GoogleMapsView.swift */; };
 		101F177B2DBF936900ED17E8 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F177A2DBF936900ED17E8 /* AppDelegate.swift */; };
 		101F177D2DBF95C700ED17E8 /* MapViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F177C2DBF95C700ED17E8 /* MapViewController.swift */; };
+		101F17842DC3C55A00ED17E8 /* EmptyCirclePlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F17832DC3C55A00ED17E8 /* EmptyCirclePlaceholder.swift */; };
+		101F17862DC3DB8700ED17E8 /* FoodThemeSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F17852DC3DB8700ED17E8 /* FoodThemeSection.swift */; };
+		101F17882DC3DB8F00ED17E8 /* IzakayaCircle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 101F17872DC3DB8F00ED17E8 /* IzakayaCircle.swift */; };
 		105DAA142DBE73D200C8C28B /* Today_s_MealApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA132DBE73D200C8C28B /* Today_s_MealApp.swift */; };
 		105DAA162DBE73D200C8C28B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 105DAA152DBE73D200C8C28B /* ContentView.swift */; };
 		105DAA1B2DBE73D400C8C28B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 105DAA1A2DBE73D400C8C28B /* Preview Assets.xcassets */; };
@@ -30,6 +33,9 @@
 		101F177A2DBF936900ED17E8 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		101F177C2DBF95C700ED17E8 /* MapViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
 		101F17822DC3C21300ED17E8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = "/Users/musung/Desktop/ios/Today-s-Meal/Today-s-Meal/Assets.xcassets"; sourceTree = "<absolute>"; };
+		101F17832DC3C55A00ED17E8 /* EmptyCirclePlaceholder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EmptyCirclePlaceholder.swift; sourceTree = "<group>"; };
+		101F17852DC3DB8700ED17E8 /* FoodThemeSection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FoodThemeSection.swift; sourceTree = "<group>"; };
+		101F17872DC3DB8F00ED17E8 /* IzakayaCircle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IzakayaCircle.swift; sourceTree = "<group>"; };
 		105DAA102DBE73D200C8C28B /* Today-s-Meal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Today-s-Meal.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		105DAA132DBE73D200C8C28B /* Today_s_MealApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Today_s_MealApp.swift; sourceTree = "<group>"; };
 		105DAA152DBE73D200C8C28B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -142,7 +148,10 @@
 			isa = PBXGroup;
 			children = (
 				106E99102DBF8C1100723D9D /* MapView.swift */,
+				101F17852DC3DB8700ED17E8 /* FoodThemeSection.swift */,
+				101F17832DC3C55A00ED17E8 /* EmptyCirclePlaceholder.swift */,
 				101F177C2DBF95C700ED17E8 /* MapViewController.swift */,
+				101F17872DC3DB8F00ED17E8 /* IzakayaCircle.swift */,
 				101F17782DBF934700ED17E8 /* GoogleMapsView.swift */,
 				105DAA2C2DBE782000C8C28B /* DetailView.swift */,
 				105DAA2D2DBE782000C8C28B /* SearchView.swift */,
@@ -298,12 +307,15 @@
 				105DAA342DBE782000C8C28B /* DetailView.swift in Sources */,
 				101F17792DBF934700ED17E8 /* GoogleMapsView.swift in Sources */,
 				101F177D2DBF95C700ED17E8 /* MapViewController.swift in Sources */,
+				101F17842DC3C55A00ED17E8 /* EmptyCirclePlaceholder.swift in Sources */,
 				105DAA3F2DBF594E00C8C28B /* LocationService.swift in Sources */,
 				105DAA352DBE782000C8C28B /* SearchView.swift in Sources */,
+				101F17882DC3DB8F00ED17E8 /* IzakayaCircle.swift in Sources */,
 				105DAA322DBE782000C8C28B /* RestaurantModels.swift in Sources */,
 				106E99112DBF8C1200723D9D /* MapView.swift in Sources */,
 				105DAA142DBE73D200C8C28B /* Today_s_MealApp.swift in Sources */,
 				105DAA332DBE782000C8C28B /* RestaurantAPI.swift in Sources */,
+				101F17862DC3DB8700ED17E8 /* FoodThemeSection.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
