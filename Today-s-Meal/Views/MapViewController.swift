@@ -21,11 +21,14 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                 updateRadiusLabel()
                 updateScaleBar()
                 
-                // 줌 레벨 자동 조정 
-                adjustZoomToFitRadius(searchRadius)
+                // 여기서 반경 변경을 알림 (콜백)
+                radiusChangeCallback?(searchRadius)
             }
         }
     }
+    
+    // 반경 변경을 부모 뷰에 알리기 위한 콜백
+    var radiusChangeCallback: ((Double) -> Void)?
     
     // 지도 뷰 참조
     private var mapView: GMSMapView!
@@ -140,12 +143,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 반경 레이블 설정
     private func setupRadiusLabel() {
-        radiusLabel = PaddingLabel(padding: UIEdgeInsets(top: 4, left: 8, bottom: 4, right: 8))
-        radiusLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        radiusLabel = PaddingLabel(padding: UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12))
+        radiusLabel.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.8)
         radiusLabel.textColor = .white
-        radiusLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        radiusLabel.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
         radiusLabel.textAlignment = .center
-        radiusLabel.layer.cornerRadius = 8
+        radiusLabel.layer.cornerRadius = 12
         radiusLabel.clipsToBounds = true
         
         // 기본 반경 텍스트 설정
@@ -154,30 +157,47 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 지도 뷰에 추가
         mapView.addSubview(radiusLabel)
         
-        // 레이블 위치 조정 (왼쪽 하단)
+        // 레이블 위치 조정 (중앙 상단)
         radiusLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            radiusLabel.leadingAnchor.constraint(equalTo: mapView.leadingAnchor, constant: 16),
-            radiusLabel.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -32)
+            radiusLabel.centerXAnchor.constraint(equalTo: mapView.centerXAnchor),
+            radiusLabel.topAnchor.constraint(equalTo: mapView.topAnchor, constant: 70)
         ])
         
-        // 화면에서 숨김
-        radiusLabel.isHidden = true
+        // 기본적으로 표시
+        radiusLabel.isHidden = false
+        
+        // 2초 후 숨김
+        perform(#selector(fadeOutRadiusLabel), with: nil, afterDelay: 2.0)
     }
     
     // 반경 레이블 업데이트
     private func updateRadiusLabel() {
         let radiusText: String
         if searchRadius >= 1000 {
-            let kmRadius = searchRadius / 1000.0
-            radiusText = String(format: "검색 반경: %.1f km", kmRadius)
+            // 정확히 3000m일 때는 3.0km로 표시
+            if searchRadius == 3000 {
+                radiusText = "반경: 3.0 km"
+            } else {
+                let kmRadius = searchRadius / 1000.0
+                radiusText = String(format: "반경: %.1f km", kmRadius)
+            }
         } else {
-            radiusText = String(format: "검색 반경: %.0f m", searchRadius)
+            radiusText = String(format: "반경: %d m", Int(searchRadius))
         }
         
         // UI 업데이트는 메인 스레드에서
         DispatchQueue.main.async { [weak self] in
             self?.radiusLabel.text = radiusText
+            
+            // 검색 반경 변경 시 애니메이션 효과
+            UIView.animate(withDuration: 0.2) {
+                self?.radiusLabel.transform = CGAffineTransform(scaleX: 1.1, y: 1.1)
+            } completion: { _ in
+                UIView.animate(withDuration: 0.1) {
+                    self?.radiusLabel.transform = .identity
+                }
+            }
         }
     }
     
@@ -211,12 +231,16 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 새 원 생성
         let circle = GMSCircle(position: location.coordinate, radius: searchRadius)
-        circle.fillColor = UIColor.clear // 내부 완전 투명
-        circle.strokeColor = UIColor.blue // 테두리 파란색
+        circle.fillColor = UIColor.systemBlue.withAlphaComponent(0.1) // 약간의 파란색 내부 (완전 투명 대신)
+        circle.strokeColor = UIColor.systemBlue.withAlphaComponent(0.8) // 더 진한 테두리
         circle.strokeWidth = 2 // 테두리 두께
         circle.map = mapView
         
         self.radiusCircle = circle
+        
+        // 반경 레이블도 함께 업데이트 및 표시
+        updateRadiusLabel()
+        showRadiusLabelTemporarily()
     }
     
     // 현재 위치로 지도 이동
@@ -306,6 +330,89 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         updateScaleBar()
     }
     
+    // 깔끔한 반올림 거리 계산 (구글 맵 스타일)
+    private func calculateNiceRoundedDistance(for distance: Double) -> Double {
+        // 최소 거리를 300m로 제한
+        if distance < 300 {
+            return 300.0
+        }
+        
+        // 최대 거리를 3000m로 제한
+        if distance > 3000 {
+            return 3000.0
+        }
+        
+        let niceDistances: [Double] = [
+            300, 500, 1000, 2000, 3000
+        ]
+        
+        // 적절한 반올림 거리 찾기
+        for niceDistance in niceDistances {
+            if distance <= niceDistance * 1.5 {
+                return niceDistance
+            }
+        }
+        
+        return 3000.0 // 최대 3km로 제한
+    }
+    
+    // 디버깅용: 실제 화면에 표시되는 반경 체크
+    private func debugCheckVisibleRadius() {
+        guard let mapView = self.mapView,
+              let location = currentLocation else { return }
+        
+        let projection = mapView.projection
+        let center = location.coordinate
+        let centerPoint = projection.point(for: center)
+        
+        // 화면 가로 끝까지의 실제 거리 계산
+        let rightEdgePoint = CGPoint(x: mapView.bounds.maxX, y: centerPoint.y)
+        let rightEdgeCoord = projection.coordinate(for: rightEdgePoint)
+        let visibleRadius = GMSGeometryDistance(center, rightEdgeCoord)
+        
+        // 거리 표시 형식
+        let formattedSearchRadius: String
+        if searchRadius >= 1000 {
+            formattedSearchRadius = String(format: "%.1f km", searchRadius / 1000.0)
+        } else {
+            formattedSearchRadius = "\(Int(searchRadius)) m"
+        }
+        
+        print("📏 화면에 보이는 실제 반경: \(Int(visibleRadius))m (설정된 반경: \(formattedSearchRadius))")
+    }
+    
+    // 스케일바 거리를 기반으로 검색 반경 업데이트 (완전 동기화)
+    private func updateSearchRadiusBasedOnScale(_ scaleDistance: Double) {
+        // 검색 반경을 스케일바 거리와 1:1로 매칭 (2배가 아닌 직접 사용)
+        // 최소값 300m, 최대값 3000m로 제한
+        let calculatedRadius = min(max(scaleDistance, 300.0), 3000.0)
+        
+        // 표준 반경 값과 매핑 (필요한 경우)
+        let standardRadii = [300.0, 500.0, 1000.0, 2000.0, 3000.0]
+        
+        // 스케일바와 완전히 일치하는 값 사용
+        var closestRadius = calculatedRadius
+        
+        // 너무 자주 업데이트되지 않도록 이전 값과의 차이가 5% 이상일 때만 업데이트
+        if abs(closestRadius - searchRadius) / searchRadius > 0.05 {
+            // 출력 형식 - km일 경우 소수점 형식
+            let formattedRadius: String
+            if closestRadius >= 1000 {
+                formattedRadius = String(format: "%.1f km", closestRadius / 1000.0)
+            } else {
+                formattedRadius = "\(Int(closestRadius)) m"
+            }
+            
+            print("📏 스케일바 기반 반경 업데이트: \(formattedRadius)")
+            
+            // searchRadius 직접 업데이트 (이렇게 하면 didSet에서 원 업데이트가 자동 호출됨)
+            searchRadius = closestRadius
+            
+            // 반경 레이블 표시 (일시적으로)
+            showRadiusLabelTemporarily()
+        }
+    }
+    
     // 스케일 바 업데이트
     private func updateScaleBar() {
         // nil 체크 및 필요한 요소 가져오기
@@ -345,8 +452,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let targetBarLengthPoints: Double = 100.0 // 원하는 막대 길이 (포인트)
         let approxDistanceForTargetLength = targetBarLengthPoints / pointsPerMeter
         
-        // 3. 표시할 '깔끔한' 거리 선택
-        let displayDistance = calculateNiceRoundedDistance(for: approxDistanceForTargetLength)
+        // 3. 표시할 '깔끔한' 거리 선택 - 최소값 300m, 최대값 3000m으로 제한
+        let displayDistance = min(max(calculateNiceRoundedDistance(for: approxDistanceForTargetLength), 300.0), 3000.0)
         
         // 4. 선택된 거리를 표시하기 위한 실제 막대 길이 계산
         let actualBarLengthPoints = pointsPerMeter * displayDistance
@@ -354,8 +461,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 5. 텍스트 설정
         let displayText: String
         if displayDistance >= 1000 {
-            let kmDistance = displayDistance / 1000.0
-            displayText = String(format: "%.*f km", kmDistance.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 1, kmDistance)
+            // 특정 거리는 소수점 한 자리로 표시 (3000m -> 3.0km)
+            if displayDistance == 3000 {
+                displayText = "3.0 km"
+            } else {
+                let kmDistance = displayDistance / 1000.0
+                displayText = String(format: "%.*f km", kmDistance.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 1, kmDistance)
+            }
         } else {
             displayText = "\(Int(displayDistance)) m"
         }
@@ -375,34 +487,24 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             let newLineConstraint = scaleBarLine.widthAnchor.constraint(equalToConstant: CGFloat(actualBarLengthPoints))
             newLineConstraint.isActive = true
         }
-    }
-    
-    // 깔끔한 반올림 거리 계산 (구글 맵 스타일)
-    private func calculateNiceRoundedDistance(for distance: Double) -> Double {
-        let niceDistances: [Double] = [
-            10, 20, 25, 50, 100, 200, 250, 500,
-            1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000
-        ]
         
-        // 적절한 반올림 거리 찾기
-        for niceDistance in niceDistances {
-            if distance <= niceDistance * 1.5 {
-                return niceDistance
-            }
+        // 현재 위치가 설정되어 있으면, 스케일바와 완전히 일치하는 검색 반경 업데이트 시도
+        // (현재 보이는 거리를 기준으로 검색 반경 계산)
+        if let location = currentLocation {
+            // 스케일바의 거리 표시가 변경되면 검색 반경도 맞춰서 업데이트
+            updateSearchRadiusBasedOnScale(displayDistance)
         }
-        
-        return 100000 // 최대 100km
     }
     
     // MARK: - GMSMapViewDelegate
     
     // 카메라 이동이 완료된 후 호출
     func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
+        // 스케일 바 업데이트 (검색 반경도 자동으로 함께 업데이트됨)
+        updateScaleBar()
+        
         // 디버깅용: 줌 레벨 변경 시 보이는 반경 확인
         debugCheckVisibleRadius()
-        
-        // 스케일 바 업데이트
-        updateScaleBar()
         
         // 디버깅용
         print("📏 줌 레벨 변경: \(position.zoom)")
@@ -467,20 +569,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         return nil
     }
     
-    // 검색 반경 설정 (버튼 클릭에 대응하는 함수)
-    func setSearchRadius(_ radius: Double) {
-        print("🎯 지도 검색 반경 설정: \(radius)m, 기존: \(searchRadius)m")
-        
-        // 반경이 변경되었을 경우에만 처리
-        if abs(searchRadius - radius) > 0.1 {
-            // 검색 반경 설정
-            self.searchRadius = radius
-            
-            // 선택된 반경에 맞는 줌 레벨로 지도 조정
-            adjustZoomToFitRadius(radius)
-        }
-    }
-    
     // 반경에 맞게 지도 줌 레벨 조정
     private func adjustZoomToFitRadius(_ radius: Double) {
         guard let location = currentLocation else { 
@@ -488,25 +576,28 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             return 
         }
         
+        // 유효한 반경으로 제한 (300m ~ 3000m)
+        let validRadius = min(max(radius, 300.0), 3000.0)
+        
         // 반경에 따른 적절한 줌 레벨 계산 - Google Maps 특성상 각 값 미세 조정
         var zoomLevel: Float
         
-        switch radius {
+        switch validRadius {
         case ...300:
-            zoomLevel = 16.0 // 300m
+            zoomLevel = 16.5 // 300m - 정확히 300m가 보이도록 조정
         case ...500:
-            zoomLevel = 15.0 // 500m 
+            zoomLevel = 16.0 // 500m
         case ...1000:
-            zoomLevel = 14.0 // 1km
+            zoomLevel = 15.0 // 1km
         case ...2000:
-            zoomLevel = 13.0 // 2km
+            zoomLevel = 14.0 // 2km
         case ...3000:
-            zoomLevel = 12.0 // 3km
+            zoomLevel = 13.0 // 3km
         default:
-            zoomLevel = 11.0 // 3km 초과
+            zoomLevel = 13.0 // 3km 이상은 없지만 안전장치로 유지
         }
         
-        print("🔍 반경 \(radius)m에 맞게 줌 레벨 조정: \(zoomLevel)")
+        print("🔍 반경 \(validRadius)m에 맞게 줌 레벨 조정: \(zoomLevel)")
         
         // 애니메이션과 함께 카메라 이동 - 현재 위치 중심
         let cameraUpdate = GMSCameraUpdate.setTarget(location.coordinate, zoom: zoomLevel)
@@ -516,26 +607,58 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         debugCheckVisibleRadius()
     }
     
-    // 디버깅용: 실제 화면에 표시되는 반경 체크
-    private func debugCheckVisibleRadius() {
-        guard let mapView = self.mapView,
-              let location = currentLocation else { return }
+    // 검색 반경 설정 (버튼 클릭에 대응하는 함수)
+    func setSearchRadius(_ radius: Double) {
+        // 유효한 범위 확인 (300m~3000m)
+        let validRadius = min(max(radius, 300.0), 3000.0)
         
-        let projection = mapView.projection
-        let center = location.coordinate
-        let centerPoint = projection.point(for: center)
+        print("🎯 지도 검색 반경 설정: \(validRadius)m, 기존: \(searchRadius)m")
         
-        // 화면 가로 끝까지의 실제 거리 계산
-        let rightEdgePoint = CGPoint(x: mapView.bounds.maxX, y: centerPoint.y)
-        let rightEdgeCoord = projection.coordinate(for: rightEdgePoint)
-        let visibleRadius = GMSGeometryDistance(center, rightEdgeCoord)
-        
-        print("📏 화면에 보이는 실제 반경: \(Int(visibleRadius))m (설정된 반경: \(Int(searchRadius))m)")
+        // 반경이 변경되었을 경우에만 처리
+        if abs(searchRadius - validRadius) > 0.1 {
+            // 검색 반경 설정
+            self.searchRadius = validRadius
+            
+            // 선택된 반경에 맞는 줌 레벨로 지도 조정 (버튼으로 변경할 때만)
+            adjustZoomToFitRadius(validRadius)
+        }
     }
     
     // NativeMapView에서 반경 버튼 클릭 시 호출될 메서드
     func handleRadiusButtonTap(radius: Double) {
         setSearchRadius(radius)
+    }
+    
+    // 반경 레이블을 일시적으로 표시
+    private func showRadiusLabelTemporarily() {
+        // 레이블 표시
+        radiusLabel.isHidden = false
+        radiusLabel.alpha = 1.0
+        
+        // 기존 타이머 취소
+        NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(fadeOutRadiusLabel), object: nil)
+        
+        // 2초 후 레이블 서서히 사라지게
+        perform(#selector(fadeOutRadiusLabel), with: nil, afterDelay: 2.0)
+    }
+    
+    @objc private func fadeOutRadiusLabel() {
+        // 서서히 사라지는 애니메이션
+        UIView.animate(withDuration: 1.0) { [weak self] in
+            self?.radiusLabel.alpha = 0.0
+        } completion: { [weak self] finished in
+            if finished {
+                self?.radiusLabel.isHidden = true
+                self?.radiusLabel.alpha = 1.0
+            }
+        }
+    }
+    
+    // 지도 핀치에 따라 검색 반경 업데이트 (스케일바와 동기화된 새 방식)
+    private func updateSearchRadiusFromVisibleRegion() {
+        // 스케일바가 업데이트될 때 함께 검색 반경도 업데이트되므로
+        // 여기서는 스케일바 업데이트만 호출
+        updateScaleBar()
     }
 }
 
@@ -578,6 +701,15 @@ struct NativeMapView: UIViewControllerRepresentable {
         let viewController = MapViewController()
         viewController.currentLocation = mapLocation
         viewController.searchRadius = selectedRadius
+        
+        // 반경 변경 콜백 설정
+        viewController.radiusChangeCallback = { newRadius in
+            // 지도에서 반경이 변경될 때마다 부모 뷰의 상태 업데이트
+            DispatchQueue.main.async {
+                selectedRadius = newRadius
+            }
+        }
+        
         return viewController
     }
     
