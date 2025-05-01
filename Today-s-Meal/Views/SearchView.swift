@@ -141,49 +141,57 @@ struct SearchView: View {
                         Text("음식 테마")
                             .font(.headline)
                         
-                        Text("아래 영역에 이미지 15개를 적용할 수 있습니다")
+                        Text("아래 영역에 이미지를 적용할 수 있습니다")
                             .font(.caption)
                             .foregroundColor(.gray)
                             .padding(.bottom, 8)
                         
-                        // 첫 번째 줄
+                        // 첫 번째 줄 (1-4)
                         HStack(spacing: 12) {
-                            // 예시: 첫 번째 칸에는 실제 아이템 표시
-                            FoodCategoryItem(imageName: "bowl.fill", label: "한식")
-                            FoodCategoryItem(imageName: "fish.fill", label: "일식")
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
+                            EmptyCirclePlaceholder(label: "居酒屋")
+                            EmptyCirclePlaceholder(label: "ダイニングバー・バル")
+                            EmptyCirclePlaceholder(label: "創作料理")
+                            EmptyCirclePlaceholder(label: "和食")
                         }
                         .padding(.bottom, 12)
                         
-                        // 두 번째 줄
+                        // 두 번째 줄 (5-8)
                         HStack(spacing: 12) {
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryItem(imageName: "wineglass.fill", label: "주점")
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
+                            EmptyCirclePlaceholder(label: "洋食")
+                            EmptyCirclePlaceholder(label: "イタリアン・フレンチ")
+                            EmptyCirclePlaceholder(label: "中華")
+                            EmptyCirclePlaceholder(label: "焼肉・ホルモン")
                         }
                         .padding(.bottom, 12)
                         
-                        // 세 번째 줄
+                        // 세 번째 줄 (9-12)
                         HStack(spacing: 12) {
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
+                            EmptyCirclePlaceholder(label: "韓国料理")
+                            EmptyCirclePlaceholder(label: "アジア・エスニック料理")
+                            EmptyCirclePlaceholder(label: "各国料理")
+                            EmptyCirclePlaceholder(label: "カラオケ・パーティ")
                         }
                         .padding(.bottom, 12)
                         
-                        // 네 번째 줄 (3개)
+                        // 네 번째 줄 (13-16)
                         HStack(spacing: 12) {
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
-                            FoodCategoryImagePlaceholder()
+                            EmptyCirclePlaceholder(label: "バー・カクテル")
+                            EmptyCirclePlaceholder(label: "ラーメン")
+                            EmptyCirclePlaceholder(label: "お好み焼き・もんじゃ")
+                            EmptyCirclePlaceholder(label: "カフェ・スイーツ")
+                        }
+                        .padding(.bottom, 12)
+                        
+                        // 다섯 번째 줄 (17)
+                        HStack(spacing: 12) {
+                            EmptyCirclePlaceholder(label: "その他グルメ")
+                            Spacer() // 빈 공간
+                            Spacer() // 빈 공간
                             Spacer() // 빈 공간
                         }
                         
                         // 사용 방법 안내
-                        Text("* 이미지 추가 방법: Assets.xcassets에 각 음식 카테고리별 이미지를 추가한 후, 코드의 플레이스홀더를 FoodCategoryItem으로 대체하면 됩니다.")
+                        Text("* 이미지 추가 방법: Assets.xcassets에 이미지를 추가한 후, 코드에서 useCustomImage: true 옵션을 추가하면 됩니다.")
                             .font(.caption2)
                             .foregroundColor(.gray)
                             .padding(.top, 8)
@@ -426,6 +434,33 @@ struct FoodCategoryItem: View {
                     .background(Circle().fill(Color.orange.opacity(0.2)))
                     .foregroundColor(.orange)
             }
+            
+            // 카테고리 이름
+            Text(label)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.gray)
+        }
+        .frame(width: 80, height: 80)
+    }
+}
+
+// 원형 배경은 유지하고 아이콘은 제거하여 사용자가 직접 이미지를 추가할 수 있게 합니다.
+struct EmptyCirclePlaceholder: View {
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            // 원형 배경
+            Circle()
+                .fill(Color.orange.opacity(0.2))
+                .frame(width: 60, height: 60)
+                .overlay(
+                    // 사용자가 여기에 이미지를 추가할 수 있습니다
+                    Text("+")
+                        .font(.system(size: 20))
+                        .foregroundColor(.gray.opacity(0.7))
+                )
             
             // 카테고리 이름
             Text(label)
