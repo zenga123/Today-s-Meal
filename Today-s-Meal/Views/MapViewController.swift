@@ -14,21 +14,28 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 검색 반경 (미터 단위)
     var searchRadius: Double = 1000 {
         didSet {
+            // oldValue와 비교하는 조건은 유지 (불필요한 업데이트 방지)
             if abs(oldValue - searchRadius) > 0.1 {
                 print("🔄 searchRadius didSet: \(oldValue) -> \(searchRadius)")
-                // 반경이 변경되면 즉시 업데이트
+                // 반경 원, 레이블, 스케일 바 업데이트
                 updateRadiusCircle()
                 updateRadiusLabel()
                 updateScaleBar()
-                
-                // 여기서 반경 변경을 알림 (콜백)
-                radiusChangeCallback?(searchRadius)
+
+                // 줌 업데이트 로직은 제거 (setSearchRadius 또는 updateSearchRadiusBasedOnScale에서 처리)
+                // updateMapZoomForRadius() // 제거
+
+                // 콜백 호출도 제거 (updateSearchRadiusBasedOnScale 함수로 이동)
+                // radiusChangeCallback?(searchRadius) // 제거
             }
         }
     }
     
     // 반경 변경을 부모 뷰에 알리기 위한 콜백
     var radiusChangeCallback: ((Double) -> Void)?
+    
+    // 프로그램적인 줌 변경 여부 플래그
+    private var isProgrammaticZoomChange: Bool = false
     
     // 지도 뷰 참조
     private var mapView: GMSMapView!
@@ -393,8 +400,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 스케일바와 완전히 일치하는 값 사용
         var closestRadius = calculatedRadius
         
-        // 너무 자주 업데이트되지 않도록 이전 값과의 차이가 5% 이상일 때만 업데이트
-        if abs(closestRadius - searchRadius) / searchRadius > 0.05 {
+        // 이전 값과의 차이가 일정 수준 이상일 때만 업데이트 (너무 잦은 업데이트 방지)
+        if abs(closestRadius - searchRadius) / searchRadius > 0.05 || (searchRadius == 0 && closestRadius > 0) { // searchRadius가 0일 때도 업데이트 되도록 조건 추가
             // 출력 형식 - km일 경우 소수점 형식
             let formattedRadius: String
             if closestRadius >= 1000 {
@@ -405,11 +412,18 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             
             print("📏 스케일바 기반 반경 업데이트: \(formattedRadius)")
             
-            // searchRadius 직접 업데이트 (이렇게 하면 didSet에서 원 업데이트가 자동 호출됨)
+            // searchRadius 직접 업데이트 (didSet 호출)
+            // 주의: didSet 로직 변경으로 인해 무한 루프 발생 가능성 없음 확인 필요
+            // didSet에서 콜백이 제거되었으므로 괜찮음
             searchRadius = closestRadius
-            
+
             // 반경 레이블 표시 (일시적으로)
             showRadiusLabelTemporarily()
+
+            // --- 추가된 코드 시작 ---
+            // SwiftUI 뷰에 변경 사항 알림
+            radiusChangeCallback?(closestRadius)
+            // --- 추가된 코드 끝 ---
         }
     }
     
@@ -488,11 +502,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             newLineConstraint.isActive = true
         }
         
-        // 현재 위치가 설정되어 있으면, 스케일바와 완전히 일치하는 검색 반경 업데이트 시도
-        // (현재 보이는 거리를 기준으로 검색 반경 계산)
-        if let location = currentLocation {
-            // 스케일바의 거리 표시가 변경되면 검색 반경도 맞춰서 업데이트
-            updateSearchRadiusBasedOnScale(displayDistance)
+        // 현재 위치가 설정되어 있고, 프로그램적 줌 변경이 아닐 때만 스케일 기반 반경 업데이트
+        if !isProgrammaticZoomChange, let _ = currentLocation { // 플래그 확인 및 위치 확인
+             // 이전에 주석 처리했던 호출 재활성화
+             updateSearchRadiusBasedOnScale(displayDistance)
         }
     }
     
@@ -500,7 +513,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 카메라 이동이 완료된 후 호출
     func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
-        // 스케일 바 업데이트 (검색 반경도 자동으로 함께 업데이트됨)
+        // 스케일 바 업데이트
         updateScaleBar()
         
         // 디버깅용: 줌 레벨 변경 시 보이는 반경 확인
@@ -508,6 +521,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 디버깅용
         print("📏 줌 레벨 변경: \(position.zoom)")
+    }
+
+    // 지도가 유휴 상태일 때 호출 (애니메이션 완료 등)
+    func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
+        // 카메라 이동이 멈추면 프로그램적 줌 변경 플래그를 해제
+        self.isProgrammaticZoomChange = false
+        print("🗺️ 지도 유휴 상태, isProgrammaticZoomChange = false")
     }
     
     // 지도 로드 완료 시 호출
@@ -602,7 +622,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 애니메이션과 함께 카메라 이동 - 현재 위치 중심
         let cameraUpdate = GMSCameraUpdate.setTarget(location.coordinate, zoom: zoomLevel)
         mapView.animate(with: cameraUpdate)
-        
+
         // 실제 화면에 표시되는 반경 확인 - 디버깅용
         debugCheckVisibleRadius()
     }
@@ -611,16 +631,21 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     func setSearchRadius(_ radius: Double) {
         // 유효한 범위 확인 (300m~3000m)
         let validRadius = min(max(radius, 300.0), 3000.0)
-        
+
         print("🎯 지도 검색 반경 설정: \(validRadius)m, 기존: \(searchRadius)m")
-        
+
         // 반경이 변경되었을 경우에만 처리
         if abs(searchRadius - validRadius) > 0.1 {
-            // 검색 반경 설정
+            // --- 수정된 코드 시작 ---
+            // searchRadius 설정 전에 플래그를 먼저 설정
+            self.isProgrammaticZoomChange = true
+            // --- 수정된 코드 끝 ---
+
+            // 검색 반경 설정 (didSet 호출됨)
             self.searchRadius = validRadius
-            
-            // 선택된 반경에 맞는 줌 레벨로 지도 조정 (버튼으로 변경할 때만)
-            adjustZoomToFitRadius(validRadius)
+
+            // 선택된 반경에 맞는 줌 레벨로 지도 조정 (bounds 기반으로 통일)
+            updateMapZoomForRadius() // 수정: bounds 기반 줌 업데이트 호출
         }
     }
     
@@ -659,6 +684,38 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 스케일바가 업데이트될 때 함께 검색 반경도 업데이트되므로
         // 여기서는 스케일바 업데이트만 호출
         updateScaleBar()
+    }
+
+    // 반경 변경 시 지도 뷰 업데이트
+    private func updateMapZoomForRadius() {
+        // radiusCircle의 position과 radius를 사용하여 bounds 계산
+        guard let center = self.radiusCircle?.position else {
+            print("⚠️ 반경 원(radiusCircle) 또는 중심(position)을 찾을 수 없어 줌 업데이트 실패")
+            return
+        }
+        let radius = self.radiusCircle?.radius ?? self.searchRadius // 혹시 circle이 nil이면 searchRadius 사용
+
+        // 북, 동, 남, 서 방향으로 radius만큼 떨어진 지점 계산
+        let northCoord = GMSGeometryOffset(center, radius, 0)    // Heading 0 = North
+        let eastCoord  = GMSGeometryOffset(center, radius, 90)   // Heading 90 = East
+        let southCoord = GMSGeometryOffset(center, radius, 180)  // Heading 180 = South
+        let westCoord  = GMSGeometryOffset(center, radius, 270)  // Heading 270 = West
+
+        // 계산된 지점들을 이용하여 북동(NE), 남서(SW) 좌표 생성
+        let northEast = CLLocationCoordinate2D(latitude: northCoord.latitude, longitude: eastCoord.longitude)
+        let southWest = CLLocationCoordinate2D(latitude: southCoord.latitude, longitude: westCoord.longitude)
+
+        // 최종 bounds 생성
+        let bounds = GMSCoordinateBounds(coordinate: southWest, coordinate: northEast)
+
+        // bounds에 맞춰 카메라 업데이트 (패딩 포함)
+        let cameraUpdate = GMSCameraUpdate.fit(bounds, withPadding: 50.0) // 50 포인트 패딩
+
+        // 애니메이션 시작 전 플래그 설정
+        self.isProgrammaticZoomChange = true
+        mapView.animate(with: cameraUpdate)
+
+        print("🗺️ 지도 줌 업데이트 완료: 반경 \(searchRadius)m")
     }
 }
 
@@ -726,7 +783,10 @@ struct NativeMapView: UIViewControllerRepresentable {
         // 반경 업데이트
         if abs(uiViewController.searchRadius - selectedRadius) > 0.1 {
             print("⚡️ NativeMapView: 반경 변경 감지 \(uiViewController.searchRadius) -> \(selectedRadius)")
-            uiViewController.searchRadius = selectedRadius
+            // --- 수정된 코드 시작 ---
+            // uiViewController.searchRadius = selectedRadius // 제거: 직접 설정 대신 함수 호출
+            uiViewController.setSearchRadius(selectedRadius) // 수정: setSearchRadius 호출
+            // --- 수정된 코드 끝 ---
         }
     }
 } 
