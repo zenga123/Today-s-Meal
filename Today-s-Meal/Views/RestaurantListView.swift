@@ -40,58 +40,74 @@ struct RestaurantListView: View {
             
             // 레스토랑 리스트
             ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(viewModel.restaurants) { restaurant in
-                        RestaurantRow(
-                            restaurant: restaurant, 
-                            distance: restaurant.distance(from: CLLocation(
-                                latitude: locationService.currentLocation?.coordinate.latitude ?? 0,
-                                longitude: locationService.currentLocation?.coordinate.longitude ?? 0
-                            ))
-                        )
-                        .onAppear {
-                            // 마지막 항목에서 2개 앞에 도달하면 다음 페이지 로드
-                            if let lastIndex = viewModel.restaurants.indices.last,
-                               let currentIndex = viewModel.restaurants.firstIndex(where: { $0.id == restaurant.id }),
-                               currentIndex >= lastIndex - 2 {
-                                viewModel.loadMoreIfNeeded()
+                ScrollViewReader { scrollProxy in
+                    LazyVStack(spacing: 0) {
+                        ForEach(viewModel.restaurants) { restaurant in
+                            RestaurantRow(
+                                restaurant: restaurant, 
+                                distance: restaurant.distance(from: CLLocation(
+                                    latitude: locationService.currentLocation?.coordinate.latitude ?? 0,
+                                    longitude: locationService.currentLocation?.coordinate.longitude ?? 0
+                                ))
+                            )
+                            .id(restaurant.id)
+                            .onAppear {
+                                // 마지막 항목에서 5개 앞에 도달하면 다음 페이지 로드
+                                if let lastIndex = viewModel.restaurants.indices.last,
+                                   let currentIndex = viewModel.restaurants.firstIndex(where: { $0.id == restaurant.id }),
+                                   currentIndex >= lastIndex - 5 {
+                                    // 현재 보고 있는 항목의 ID를 기억
+                                    let currentVisibleID = restaurant.id
+                                    let oldCount = viewModel.restaurants.count
+                                    
+                                    viewModel.loadMoreIfNeeded()
+                                    
+                                    // 데이터 로드 후 스크롤 위치 보존
+                                    if viewModel.restaurants.count > oldCount {
+                                        DispatchQueue.main.async {
+                                            withAnimation {
+                                                scrollProxy.scrollTo(currentVisibleID, anchor: .center)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                    
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, maxHeight: 50)
-                            .tint(.white)
-                    }
-                    
-                    if !viewModel.isLoading && viewModel.restaurants.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 50))
-                                .foregroundColor(.gray)
-                            
-                            Text("검색 결과가 없습니다")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                            
-                            Text("다른 테마나 검색 반경을 변경해보세요")
-                                .font(.subheadline)
-                                .foregroundColor(.gray.opacity(0.8))
+                        
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity, maxHeight: 50)
+                                .tint(.white)
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 100)
-                    }
-                    
-                    // 마지막 페이지 도달 시 더 이상 결과가 없음을 표시
-                    if !viewModel.isLoading && !viewModel.hasMorePages && !viewModel.restaurants.isEmpty {
-                        HStack {
-                            Spacer()
-                            Text("모든 결과를 불러왔습니다")
-                                .font(.caption)
-                                .foregroundColor(.gray.opacity(0.7))
-                                .padding(.vertical, 16)
-                            Spacer()
+                        
+                        if !viewModel.isLoading && viewModel.restaurants.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 50))
+                                    .foregroundColor(.gray)
+                                
+                                Text("검색 결과가 없습니다")
+                                    .font(.headline)
+                                    .foregroundColor(.gray)
+                                
+                                Text("다른 테마나 검색 반경을 변경해보세요")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray.opacity(0.8))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 100)
+                        }
+                        
+                        // 마지막 페이지 도달 시 더 이상 결과가 없음을 표시
+                        if !viewModel.isLoading && !viewModel.hasMorePages && !viewModel.restaurants.isEmpty {
+                            HStack {
+                                Spacer()
+                                Text("모든 결과를 불러왔습니다")
+                                    .font(.caption)
+                                    .foregroundColor(.gray.opacity(0.7))
+                                    .padding(.vertical, 16)
+                                Spacer()
+                            }
                         }
                     }
                 }
@@ -149,8 +165,7 @@ class RestaurantListViewModel: ObservableObject {
     ]
     
     func searchRestaurants(theme: String, latitude: Double, longitude: Double, radius: Double) {
-        // 새 검색 시작
-        restaurants = []
+        // 이전 데이터 초기화하지 않고, 새 검색 시작을 알리는 플래그만 설정
         currentPage = 1
         hasMorePages = true
         currentTheme = theme
@@ -158,6 +173,10 @@ class RestaurantListViewModel: ObservableObject {
         currentLng = longitude
         currentRadius = radius
         isLoadingPage = false
+        errorMessage = nil
+        
+        // 새 검색을 시작할 때만 restaurants 배열 초기화
+        restaurants = []
         
         print("🔍 검색 시작: 테마 \(theme), 반경 \(radius)m")
         
@@ -175,9 +194,16 @@ class RestaurantListViewModel: ObservableObject {
         
         isLoading = true
         isLoadingPage = true
-        errorMessage = nil
         
         print("🔄 \(currentTheme) 테마 \(page) 페이지 실제 API 검색 시작, 반경: \(currentRadius)m")
+        
+        // 이미 로딩 중인 페이지인지 확인
+        if page > 1 && restaurants.count >= (page - 1) * 100 {
+            // 이미 해당 페이지 데이터가 있으면 중복 로딩 방지
+            isLoading = false
+            isLoadingPage = false
+            return
+        }
         
         // API 호출에 필요한 준비
         let apiRangeValue = getAPIRangeValue(forMeters: currentRadius)
@@ -189,7 +215,7 @@ class RestaurantListViewModel: ObservableObject {
             lat: currentLat,
             lng: currentLng,
             range: apiRangeValue, // 반경 값 전달
-            start: (page - 1) * 10 + 1
+            start: (page - 1) * 100 + 1 // 페이지당 100개씩
         )
     }
     
@@ -203,7 +229,7 @@ class RestaurantListViewModel: ObservableObject {
             lng: lng,
             range: range,
             start: start,
-            count: 10
+            count: 100 // 한 번에 최대 100개 요청
         )
         .receive(on: DispatchQueue.main)
         .sink(
@@ -255,11 +281,11 @@ class RestaurantListViewModel: ObservableObject {
                 }
                 
                 // 페이지 상태 업데이트
-                self.currentPage = (start - 1) / 10 + 1
+                self.currentPage = (start - 1) / 100 + 1
                 
                 // 10개 미만이면 마지막 페이지로 간주
                 // 또는 API 응답이 0개면 더 이상 데이터가 없는 것으로 간주
-                self.hasMorePages = filteredRestaurants.count >= 10 && filteredRestaurants.count > 0
+                self.hasMorePages = filteredRestaurants.count >= 100 && filteredRestaurants.count > 0
                 
                 // 상태 업데이트
                 self.isLoading = false

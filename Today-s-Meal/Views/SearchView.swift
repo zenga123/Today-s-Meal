@@ -51,7 +51,7 @@ struct SearchView: View {
                             HStack {
                                 Text("\(theme == "izakaya" ? "居酒屋" : theme) 음식점")
                                     .font(.headline)
-                            .foregroundColor(.white)
+                                    .foregroundColor(.white)
                                 
                                 Spacer()
                                 
@@ -64,7 +64,7 @@ struct SearchView: View {
                             
                             if themeViewModel.isLoading && themeViewModel.restaurants.isEmpty {
                                 // 처음 로딩할 때만 전체 로딩 뷰 표시
-                            HStack {
+                                HStack {
                                     Spacer()
                                     VStack(spacing: 12) {
                                         ProgressView()
@@ -89,63 +89,79 @@ struct SearchView: View {
                                     Text("다른 테마나 검색 반경을 변경해보세요")
                                         .font(.caption)
                                         .foregroundColor(.gray.opacity(0.8))
-                            }
-                            .frame(maxWidth: .infinity)
+                                }
+                                .frame(maxWidth: .infinity)
                                 .padding(.vertical, 40)
                             } else {
                                 // 레스토랑 리스트
-                                LazyVStack(spacing: 0) {
-                                    // 식당 목록 로딩 중 상태 표시 (헤더)
-                                    if themeViewModel.isLoading {
-                                        HStack {
-                                            Spacer()
-                                            Text("더 많은 음식점 검색 중...")
-                                                .font(.caption)
-                                                .foregroundColor(.gray.opacity(0.7))
-                                            Spacer()
+                                ScrollViewReader { scrollProxy in
+                                    LazyVStack(spacing: 0) {
+                                        // 식당 목록 로딩 중 상태 표시 (헤더)
+                                        if themeViewModel.isLoading {
+                                            HStack {
+                                                Spacer()
+                                                Text("더 많은 음식점 검색 중...")
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray.opacity(0.7))
+                                                Spacer()
+                                            }
+                                            .padding(.vertical, 8)
                                         }
-                                        .padding(.vertical, 8)
-                                    }
-                                    
-                                    ForEach(themeViewModel.restaurants) { restaurant in
-                                        RestaurantRow(
-                                            restaurant: restaurant, 
-                                            distance: restaurant.distance(from: CLLocation(
-                                                latitude: locationService.currentLocation?.coordinate.latitude ?? 0,
-                                                longitude: locationService.currentLocation?.coordinate.longitude ?? 0
-                                            ))
-                                        )
-                                        .onAppear {
-                                            // 마지막 항목에서 2개 앞에 도달하면 다음 페이지 로드 시작
-                                            // 이렇게 하면 사용자가 마지막 항목에 도달하기 전에 미리 로딩
-                                            if let lastIndex = themeViewModel.restaurants.indices.last,
-                                               let currentIndex = themeViewModel.restaurants.firstIndex(where: { $0.id == restaurant.id }),
-                                               currentIndex >= lastIndex - 2 {
-                                                themeViewModel.loadMoreIfNeeded()
+                                        
+                                        ForEach(themeViewModel.restaurants) { restaurant in
+                                            RestaurantRow(
+                                                restaurant: restaurant, 
+                                                distance: restaurant.distance(from: CLLocation(
+                                                    latitude: locationService.currentLocation?.coordinate.latitude ?? 0,
+                                                    longitude: locationService.currentLocation?.coordinate.longitude ?? 0
+                                                ))
+                                            )
+                                            .id(restaurant.id) // 명시적 ID 설정
+                                            .onAppear {
+                                                // 마지막 항목에서 5개 앞에 도달하면 다음 페이지 로드 시작
+                                                // 이렇게 하면 사용자가 마지막 항목에 도달하기 전에 미리 로딩
+                                                if let lastIndex = themeViewModel.restaurants.indices.last,
+                                                   let currentIndex = themeViewModel.restaurants.firstIndex(where: { $0.id == restaurant.id }),
+                                                   currentIndex >= lastIndex - 5 {
+                                                    // 현재 보고 있는 항목의 ID 기억
+                                                    let currentVisibleID = restaurant.id
+                                                    let oldCount = themeViewModel.restaurants.count
+                                                    
+                                                    themeViewModel.loadMoreIfNeeded()
+                                                    
+                                                    // 데이터가 추가된 경우 스크롤 위치 유지
+                                                    if oldCount < themeViewModel.restaurants.count {
+                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                            withAnimation {
+                                                                scrollProxy.scrollTo(currentVisibleID, anchor: .center)
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
-                                    }
-                                    
-                                    // 식당 목록 로딩 중 상태 표시 (푸터)
-                                    if themeViewModel.isLoading {
-                                        HStack {
-                                            Spacer()
-                                            ProgressView()
-                                                .frame(maxWidth: .infinity, maxHeight: 40)
-                                                .tint(.white)
-                                            Spacer()
+                                        
+                                        // 식당 목록 로딩 중 상태 표시 (푸터)
+                                        if themeViewModel.isLoading {
+                                            HStack {
+                                                Spacer()
+                                                ProgressView()
+                                                    .frame(maxWidth: .infinity, maxHeight: 40)
+                                                    .tint(.white)
+                                                Spacer()
+                                            }
                                         }
-                                    }
-                                    
-                                    // 마지막 페이지 도달 시 더 이상 결과가 없음을 표시
-                                    if !themeViewModel.isLoading && !themeViewModel.hasMorePages && !themeViewModel.restaurants.isEmpty {
-                                        HStack {
-                                            Spacer()
-                                            Text("모든 결과를 불러왔습니다")
-                            .font(.caption)
-                                                .foregroundColor(.gray.opacity(0.7))
-                                                .padding(.vertical, 16)
-                                            Spacer()
+                                        
+                                        // 마지막 페이지 도달 시 더 이상 결과가 없음을 표시
+                                        if !themeViewModel.isLoading && !themeViewModel.hasMorePages && !themeViewModel.restaurants.isEmpty {
+                                            HStack {
+                                                Spacer()
+                                                Text("모든 결과를 불러왔습니다")
+                                                    .font(.caption)
+                                                    .foregroundColor(.gray.opacity(0.7))
+                                                    .padding(.vertical, 16)
+                                                Spacer()
+                                            }
                                         }
                                     }
                                 }

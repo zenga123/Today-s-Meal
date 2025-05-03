@@ -125,16 +125,9 @@ class RestaurantAPI {
         let actualRangeMeters = getMetersFromRange(range)
         print("🔍 핫페퍼 API로 실제 식당 데이터 검색 중: 위도 \(lat), 경도 \(lng), 범위값 \(range) (약 \(actualRangeMeters)m)")
         
-        // 범위에 따라 요청할 식당 수 동적으로 조정
-        let adjustedCount: Int
-        switch range {
-        case 1: adjustedCount = 20  // 300m
-        case 2: adjustedCount = 30  // 500m
-        case 3: adjustedCount = 50  // 1km
-        case 4: adjustedCount = 70  // 2km
-        case 5: adjustedCount = 100 // 3km
-        default: adjustedCount = 30
-        }
+        // 모든 범위에서 최대 개수(100개)의 가게를 가져옵니다
+        // HotPepper API는 한 번에 최대 100개까지만 응답을 반환합니다
+        let maxCount = 100
         
         var components = URLComponents(string: baseURL)
         
@@ -144,7 +137,7 @@ class RestaurantAPI {
             URLQueryItem(name: "lng", value: String(lng)),
             URLQueryItem(name: "range", value: String(range)),
             URLQueryItem(name: "start", value: String(start)),
-            URLQueryItem(name: "count", value: String(adjustedCount)), // 동적으로 조정된 수 사용
+            URLQueryItem(name: "count", value: String(maxCount)), // 항상 최대 개수 요청
             URLQueryItem(name: "format", value: "json")
         ]
         
