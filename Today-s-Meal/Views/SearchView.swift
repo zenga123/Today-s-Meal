@@ -29,7 +29,8 @@ struct SearchView: View {
                     MapSection(
                         locationService: locationService,
                         viewModel: viewModel, 
-                        searchRadius: $searchRadius
+                        searchRadius: $searchRadius,
+                        selectedTheme: $selectedTheme
                     )
                     
                     if locationService.authorizationStatus == .notDetermined || 
@@ -261,6 +262,23 @@ struct SearchView: View {
                         longitude: location.coordinate.longitude,
                         radius: searchRadius
                     )
+                    
+                    // 지도가 새 테마를 반영하도록 약간의 지연 후 검색 실행
+                    // 지도는 이미 selectedTheme의 변경을 감지하지만, 확실히 하기 위해 여기서도 실행
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        viewModel.searchRestaurants(
+                            lat: location.coordinate.latitude,
+                            lng: location.coordinate.longitude
+                        )
+                    }
+                } else if newTheme == nil, let location = locationService.currentLocation {
+                    // 테마 선택이 해제되면 모든 음식점 표시
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        viewModel.searchRestaurants(
+                            lat: location.coordinate.latitude,
+                            lng: location.coordinate.longitude
+                        )
+                    }
                 }
             }
             .alert("위치 권한 필요", isPresented: $showLocationPermissionAlert) {
@@ -375,6 +393,7 @@ struct MapSection: View {
     @ObservedObject var locationService: LocationService
     let viewModel: RestaurantViewModel
     @Binding var searchRadius: Double
+    @Binding var selectedTheme: String?  // 선택된 테마 바인딩 추가
     
     var body: some View {
         ZStack {
@@ -382,12 +401,13 @@ struct MapSection: View {
             NativeMapView(
                 mapLocation: $locationService.currentLocation,
                 selectedRadius: $searchRadius,
-                autoSearch: true,  // 자동 검색 활성화
+                selectedTheme: selectedTheme,  // 선택된 테마 전달
+                autoSearch: true,
                 onSearchResults: { restaurants in
                     // 지도에서 검색된 식당 결과를 뷰모델에 설정
                     viewModel.restaurants = restaurants
                     
-                    // 로딩 상태 업데이트 (만약 로딩 UI가 있다면)
+                    // 로딩 상태 업데이트
                     viewModel.isLoading = false
                     
                     print("🔍 지도에서 식당 \(restaurants.count)개 검색됨")

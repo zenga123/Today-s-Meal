@@ -66,6 +66,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 마커 관리를 위한 딕셔너리 (식당 ID를 키로 사용)
     private var restaurantMarkers: [String: GMSMarker] = [:]
     
+    // 선택된 테마
+    var selectedTheme: String?
+    
     override func loadView() {
         // Google Maps API 키 설정 (코드로 직접 설정)
         GMSServices.provideAPIKey("AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8")
@@ -825,6 +828,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         print("🔍 지도에서 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
         print("🔍 검색 좌표: 위도 \(location.coordinate.latitude), 경도 \(location.coordinate.longitude)")
+        if let theme = selectedTheme {
+            print("🔍 선택된 테마: \(theme)")
+        }
         
         // API 호출
         RestaurantAPI.shared.searchRestaurants(
@@ -871,6 +877,49 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                     updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
                 }
                 
+                // 선택된 테마가 있으면 해당 테마로 필터링
+                if let selectedTheme = self.selectedTheme {
+                    // 테마와 관련된 API 검색 키워드 매핑
+                    let themeToAPIKeyword: [String: String] = [
+                        "izakaya": "居酒屋",
+                        "ダイニングバー・バル": "ダイニングバー",
+                        "創作料理": "創作料理",
+                        "和食": "和食",
+                        "洋食": "洋食",
+                        "イタリアン・フレンチ": "イタリアン",
+                        "中華": "中華",
+                        "焼肉・ホルモン": "焼肉",
+                        "韓国料理": "韓国料理",
+                        "アジア・エスニック料理": "アジア・エスニック",
+                        "各国料理": "各国料理",
+                        "カラオケ・パーティ": "カラオケ",
+                        "バー・カクテル": "バー",
+                        "ラーメン": "ラーメン",
+                        "お好み焼き・もんじゃ": "お好み焼き",
+                        "カフェ・スイーツ": "カフェ",
+                        "その他グルメ": "その他"
+                    ]
+                    
+                    let keyword = themeToAPIKeyword[selectedTheme] ?? selectedTheme
+                    
+                    print("🔍 테마 필터링: \(selectedTheme) (키워드: \(keyword))")
+                    
+                    // 테마에 맞는 식당 필터링
+                    updatedRestaurants = updatedRestaurants.filter { restaurant in
+                        // 카테고리 기반 필터링
+                        let categoryMatches = restaurant.genre?.name?.contains(keyword) ?? false || 
+                                             (selectedTheme == "izakaya" && (restaurant.genre?.name?.contains("居酒屋") ?? false))
+                        
+                        // 이름 기반 필터링
+                        let nameMatches = restaurant.name.contains(keyword) ||
+                                         (selectedTheme == "izakaya" && restaurant.name.contains("居酒屋"))
+                        
+                        return categoryMatches || nameMatches
+                    }
+                    
+                    print("📊 테마 필터링 결과: \(updatedRestaurants.count)개 식당 남음")
+                }
+                
                 // 검색 결과 업데이트 (didSet 트리거하여 마커 표시)
                 self.restaurants = updatedRestaurants
                 
@@ -880,7 +929,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                 print("✅ 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
             }
         )
-        .store(in: &cancellables) // 여기서 cancelables 추가 필요
+        .store(in: &cancellables)
     }
     
     // 취소 가능한 구독 저장
@@ -931,6 +980,8 @@ struct NativeMapView: UIViewControllerRepresentable {
     @Binding var mapLocation: CLLocation?
     // 선택된 반경 바인딩
     @Binding var selectedRadius: Double
+    // 선택된 테마 (옵션)
+    var selectedTheme: String?
     // 자동 검색 여부 (옵션)
     var autoSearch: Bool = true
     // 검색 결과 콜백 (옵션)
@@ -941,6 +992,7 @@ struct NativeMapView: UIViewControllerRepresentable {
         let viewController = MapViewController()
         viewController.currentLocation = mapLocation
         viewController.searchRadius = selectedRadius
+        viewController.selectedTheme = selectedTheme
         
         // 반경 변경 콜백 설정
         viewController.radiusChangeCallback = { newRadius in
@@ -982,6 +1034,18 @@ struct NativeMapView: UIViewControllerRepresentable {
                         uiViewController.searchRestaurants()
                     }
                 }
+            }
+        }
+        
+        // 테마 업데이트
+        let themeChanged = uiViewController.selectedTheme != selectedTheme
+        if themeChanged {
+            print("⚡️ NativeMapView: 테마 변경 감지 \(uiViewController.selectedTheme ?? "없음") -> \(selectedTheme ?? "없음")")
+            uiViewController.selectedTheme = selectedTheme
+            
+            // 자동 검색이 활성화된 경우 테마 변경 시 자동으로 검색 실행
+            if autoSearch {
+                uiViewController.searchRestaurants()
             }
         }
         
