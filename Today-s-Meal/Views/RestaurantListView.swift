@@ -159,6 +159,8 @@ class RestaurantListViewModel: ObservableObject {
         currentRadius = radius
         isLoadingPage = false
         
+        print("🔍 검색 시작: 테마 \(theme), 반경 \(radius)m")
+        
         // 첫 페이지 로딩
         loadPage(page: 1)
     }
@@ -175,7 +177,7 @@ class RestaurantListViewModel: ObservableObject {
         isLoadingPage = true
         errorMessage = nil
         
-        print("🔄 \(currentTheme) 테마 \(page) 페이지 실제 API 검색 시작")
+        print("🔄 \(currentTheme) 테마 \(page) 페이지 실제 API 검색 시작, 반경: \(currentRadius)m")
         
         // API 호출에 필요한 준비
         let apiRangeValue = getAPIRangeValue(forMeters: currentRadius)
@@ -186,7 +188,7 @@ class RestaurantListViewModel: ObservableObject {
             keyword: keyword,
             lat: currentLat,
             lng: currentLng,
-            range: apiRangeValue,
+            range: apiRangeValue, // 반경 값 전달
             start: (page - 1) * 10 + 1
         )
     }
@@ -269,18 +271,25 @@ class RestaurantListViewModel: ObservableObject {
     
     // HotPepperRestaurant를 우리 앱의 Restaurant 모델로 변환
     private func convertToRestaurants(hotPepperRestaurants: [HotPepperRestaurant], theme: String) -> [Today_s_Meal.Restaurant] {
+        print("🔍 반경 \(currentRadius)m 내 음식점 변환 중")
+        
         return hotPepperRestaurants.map { hotPepperRest in
             // 옵셔널 값들을 안전하게 처리
             let category = hotPepperRest.genre?.name ?? theme
             let imageUrl = hotPepperRest.photo?.mobile?.l
             let address = hotPepperRest.address ?? "주소 정보 없음"
             
+            // 현재 위치에서 식당까지의 거리 계산 (미터 단위)
+            let restaurantLocation = CLLocation(latitude: hotPepperRest.lat, longitude: hotPepperRest.lng)
+            let currentLocation = CLLocation(latitude: currentLat, longitude: currentLng)
+            let distanceInMeters = currentLocation.distance(from: restaurantLocation)
+            
             // 핫페퍼 API는 평점을 제공하지 않으므로 더미 평점 생성
-            // 실제 앱에서는 다른 API(Google Places 등)를 추가로 사용하여 평점 정보 보완 가능
             let rating = Double.random(in: 3.0...5.0).rounded(to: 1)
             let reviewCount = Int.random(in: 10...200)
             
-            return Today_s_Meal.Restaurant(
+            // 모델 객체 생성 시 거리 정보도 함께 포함
+            let restaurant = Today_s_Meal.Restaurant(
                 id: hotPepperRest.id,
                 name: hotPepperRest.name,
                 address: address,
@@ -291,30 +300,34 @@ class RestaurantListViewModel: ObservableObject {
                 longitude: hotPepperRest.lng,
                 imageUrl: imageUrl
             )
+            
+            return restaurant
         }
     }
     
-    // 테마에 맞는 식당만 필터링
+    // 테마에 맞는 식당만 필터링 + 검색 반경 내에 있는 식당만 필터링
     private func filterRestaurantsByTheme(restaurants: [Today_s_Meal.Restaurant], theme: String) -> [Today_s_Meal.Restaurant] {
         let keyword = themeToAPIKeyword[theme] ?? theme
+        let currentLocation = CLLocation(latitude: currentLat, longitude: currentLng)
         
-        // 이미 API에서 키워드로 필터링되어 왔을 가능성이 높지만,
-        // 추가적인 필터링이 필요하면 여기서 수행
+        print("🔍 테마: \(theme), 반경: \(currentRadius)m로 필터링 중")
+        
+        // 필터링: 테마 일치 + 검색 반경 내에 있는 식당만
         return restaurants.filter { restaurant in
-            // 필터링 키워드가 빈 문자열이면 모든 식당 포함
-            if keyword.isEmpty {
-                return true
-            }
-            
-            // 카테고리 기반 필터링 (정확히 일치하거나 부분 문자열 포함)
+            // 1. 테마 필터링
             let categoryMatches = restaurant.category.contains(keyword) || 
                                   (theme == "izakaya" && restaurant.category.contains("居酒屋"))
             
-            // 이름 기반 필터링 (선택적)
             let nameMatches = restaurant.name.contains(keyword) ||
                               (theme == "izakaya" && restaurant.name.contains("居酒屋"))
             
-            return categoryMatches || nameMatches
+            // 2. 거리 필터링: 식당이 지정된 반경 내에 있는지 확인
+            let restaurantLocation = CLLocation(latitude: restaurant.latitude, longitude: restaurant.longitude)
+            let distanceInMeters = currentLocation.distance(from: restaurantLocation)
+            let isWithinRadius = distanceInMeters <= currentRadius
+            
+            // 모든 조건을 만족해야 함: 테마 일치 + 반경 내 위치
+            return (categoryMatches || nameMatches) && isWithinRadius
         }
     }
     

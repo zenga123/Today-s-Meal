@@ -122,7 +122,8 @@ class RestaurantAPI {
     
     // 실제 일본 지역에서만 동작하는 핫페퍼 API
     func searchRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[HotPepperRestaurant], APIError> {
-        print("🔍 핫페퍼 API로 실제 식당 데이터 검색 중: 위도 \(lat), 경도 \(lng), 범위 \(range)")
+        let actualRangeMeters = getMetersFromRange(range)
+        print("🔍 핫페퍼 API로 실제 식당 데이터 검색 중: 위도 \(lat), 경도 \(lng), 범위값 \(range) (약 \(actualRangeMeters)m)")
         
         // 범위에 따라 요청할 식당 수 동적으로 조정
         let adjustedCount: Int

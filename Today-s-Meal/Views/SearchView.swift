@@ -51,7 +51,7 @@ struct SearchView: View {
                             HStack {
                                 Text("\(theme == "izakaya" ? "居酒屋" : theme) 음식점")
                                     .font(.headline)
-                                    .foregroundColor(.white)
+                            .foregroundColor(.white)
                                 
                                 Spacer()
                                 
@@ -64,7 +64,7 @@ struct SearchView: View {
                             
                             if themeViewModel.isLoading && themeViewModel.restaurants.isEmpty {
                                 // 처음 로딩할 때만 전체 로딩 뷰 표시
-                                HStack {
+                            HStack {
                                     Spacer()
                                     VStack(spacing: 12) {
                                         ProgressView()
@@ -89,8 +89,8 @@ struct SearchView: View {
                                     Text("다른 테마나 검색 반경을 변경해보세요")
                                         .font(.caption)
                                         .foregroundColor(.gray.opacity(0.8))
-                                }
-                                .frame(maxWidth: .infinity)
+                            }
+                            .frame(maxWidth: .infinity)
                                 .padding(.vertical, 40)
                             } else {
                                 // 레스토랑 리스트
@@ -142,7 +142,7 @@ struct SearchView: View {
                                         HStack {
                                             Spacer()
                                             Text("모든 결과를 불러왔습니다")
-                                                .font(.caption)
+                            .font(.caption)
                                                 .foregroundColor(.gray.opacity(0.7))
                                                 .padding(.vertical, 16)
                                             Spacer()
@@ -203,7 +203,7 @@ struct SearchView: View {
                 let newRadius = Double(viewModel.rangeOptions[newValue].value)
                 viewModel.searchRadius = newRadius
                 searchRadius = newRadius // 지도에 표시될 반경 업데이트
-                print("🔄 검색 반경 버튼 클릭: \(newRadius)m (인덱스: \(newValue))")
+                print("🔄 검색 반경 변경: \(newRadius)m (인덱스: \(newValue))")
                 
                 // 검색 반경이 변경되면 새로운 API 요청 실행
                 if let location = locationService.currentLocation {
@@ -214,11 +214,12 @@ struct SearchView: View {
                     
                     // 테마가 선택되어 있으면 테마별 음식점도 검색
                     if let theme = selectedTheme {
+                        print("🔄 반경 변경으로 \(theme) 테마 음식점 재검색: \(newRadius)m")
                         themeViewModel.searchRestaurants(
                             theme: theme,
                             latitude: location.coordinate.latitude,
                             longitude: location.coordinate.longitude,
-                            radius: searchRadius
+                            radius: newRadius
                         )
                     }
                 }
