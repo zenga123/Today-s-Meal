@@ -2,16 +2,16 @@ import SwiftUI
 import GoogleMaps
 
 struct RestaurantMapView: View {
-    var restaurants: [Restaurant]
+    var restaurants: [HotPepperRestaurant]
     var searchRadius: Double = 1000 // 기본값 1000m 
-    @State private var selectedRestaurant: Restaurant?
+    @State private var selectedRestaurant: HotPepperRestaurant?
     @State private var selectedRestaurantID: String? = nil
     
     // 맵 뷰를 위한 Coordinator
     @StateObject private var mapViewCoordinator = MapViewCoordinator()
     
     // 초기 위치 설정
-    init(restaurants: [Restaurant], userLocation: CLLocation?, searchRadius: Double = 1000) {
+    init(restaurants: [HotPepperRestaurant], userLocation: CLLocation?, searchRadius: Double = 1000) {
         self.restaurants = restaurants
         self.searchRadius = searchRadius
         
@@ -92,7 +92,7 @@ struct RestaurantMapView: View {
 
 // Google Maps 뷰 래퍼
 struct GoogleMapView: UIViewRepresentable {
-    var restaurants: [Restaurant]
+    var restaurants: [HotPepperRestaurant]
     var coordinator: MapViewCoordinator
     @Binding var selectedRestaurantID: String?
     
@@ -146,7 +146,7 @@ struct GoogleMapView: UIViewRepresentable {
 // 맵 뷰 코디네이터 (마커 관리 및 이벤트 처리)
 class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
     var mapView: GMSMapView?
-    var restaurants: [Restaurant] = []
+    var restaurants: [HotPepperRestaurant] = []
     var centerLocation: CLLocation = CLLocation(latitude: 35.6812, longitude: 139.7671) // 도쿄 기본값
     var updateMapCenter: Bool = false
     var selectedRestaurantID: String?
@@ -213,7 +213,7 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
 
 // 음식점 정보 카드 컴포넌트
 struct RestaurantInfoCard: View {
-    var restaurant: Restaurant
+    let restaurant: HotPepperRestaurant
     
     var body: some View {
         NavigationLink(destination: DetailView(restaurant: restaurant)) {

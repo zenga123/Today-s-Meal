@@ -30,7 +30,7 @@ class RestaurantAPI {
     private init() {}
     
     // 실제 일본 지역에서만 동작하는 핫페퍼 API
-    func searchRestaurantsJapan(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[Restaurant], APIError> {
+    func searchRestaurantsJapan(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[HotPepperRestaurant], APIError> {
         var components = URLComponents(string: baseURL)
         
         components?.queryItems = [
@@ -81,7 +81,7 @@ class RestaurantAPI {
                     }
                     .eraseToAnyPublisher()
             }
-            .map { response -> [Restaurant] in
+            .map { response -> [HotPepperRestaurant] in
                 print("📡 API 응답 정보: 총 \(response.results.resultsAvailable)개, 반환된 결과 \(response.results.resultsReturned)")
                 return response.results.shop
             }
@@ -89,7 +89,7 @@ class RestaurantAPI {
     }
     
     // 현재 위치 기반 가상 식당 데이터 생성 (실제 API 호출 없음)
-    func generateMockRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[Restaurant], APIError> {
+    func generateMockRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[HotPepperRestaurant], APIError> {
         print("🔍 현재 위치 주변 가상 식당 데이터 생성 중: 위도 \(lat), 경도 \(lng), 범위 \(range)m")
         
         // 반경에 따라 식당 수 조정 (범위가 넓을수록 더 많은 식당)
@@ -121,7 +121,7 @@ class RestaurantAPI {
     }
     
     // 실제 일본 지역에서만 동작하는 핫페퍼 API
-    func searchRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[Restaurant], APIError> {
+    func searchRestaurants(lat: Double, lng: Double, range: Int, start: Int = 1, count: Int = 20) -> AnyPublisher<[HotPepperRestaurant], APIError> {
         print("🔍 핫페퍼 API로 실제 식당 데이터 검색 중: 위도 \(lat), 경도 \(lng), 범위 \(range)")
         
         // 범위에 따라 요청할 식당 수 동적으로 조정
@@ -227,7 +227,7 @@ class RestaurantAPI {
                     return Fail(error: APIError.decodingError(error)).eraseToAnyPublisher()
                 }
             }
-            .map { response -> [Restaurant] in
+            .map { response -> [HotPepperRestaurant] in
                 print("📡 API 응답 정보: 총 \(response.results.resultsAvailable)개, 반환된 결과 \(response.results.resultsReturned)")
                 return response.results.shop
             }
@@ -246,12 +246,12 @@ class RestaurantAPI {
     }
     
     // 랜덤 식당 생성
-    private func generateRandomRestaurants(baseLatitude: Double, baseLongitude: Double, rangeInMeters: Double, count: Int) -> [Restaurant] {
+    private func generateRandomRestaurants(baseLatitude: Double, baseLongitude: Double, rangeInMeters: Double, count: Int) -> [HotPepperRestaurant] {
         let foodCategories = ["일식", "한식", "중식", "양식", "카페", "베이커리", "분식", "치킨", "피자", "패스트푸드"]
         let restaurantNamePrefixes = ["맛있는", "행복한", "즐거운", "신선한", "정성가득", "고소한", "달콤한", "향긋한", "편안한", "특별한"]
         let restaurantNameSuffixes = ["식당", "레스토랑", "주방", "가게", "다이닝", "키친", "하우스", "홀", "밥집", "포차"]
         
-        var restaurants: [Restaurant] = []
+        var restaurants: [HotPepperRestaurant] = []
         
         for i in 0..<count {
             // 1. 랜덤 좌표 생성 (기준 좌표에서 지정된 범위 내)
@@ -308,7 +308,7 @@ class RestaurantAPI {
     }
     
     // 가상 식당 데이터 생성
-    private func createMockRestaurant(id: String, name: String, category: String, latitude: Double, longitude: Double) -> Restaurant {
+    private func createMockRestaurant(id: String, name: String, category: String, latitude: Double, longitude: Double) -> HotPepperRestaurant {
         // 카테고리에 따른 이미지 선택
         let logoImage: String
         switch category {
@@ -353,7 +353,7 @@ class RestaurantAPI {
         let photo = Photo(pc: pc, mobile: mobile)
         
         // 식당 객체 생성
-        return Restaurant(
+        return HotPepperRestaurant(
             id: id,
             name: name,
             logoImage: logoImage,

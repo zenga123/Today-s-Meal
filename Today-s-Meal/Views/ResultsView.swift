@@ -2,16 +2,16 @@ import SwiftUI
 import MapKit
 
 struct ResultsView: View {
-    let restaurants: [Restaurant]
+    let restaurants: [HotPepperRestaurant]
     let searchRadius: Double
     let theme: String?
-    @State private var selectedRestaurant: Restaurant?
+    @State private var selectedRestaurant: HotPepperRestaurant?
     @State private var navigateToDetail = false
     @State private var showMapView = false
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var locationService: LocationService
     
-    init(restaurants: [Restaurant], searchRadius: Double = 1000, theme: String? = nil) {
+    init(restaurants: [HotPepperRestaurant], searchRadius: Double = 1000, theme: String? = nil) {
         self.restaurants = restaurants
         self.searchRadius = searchRadius
         self.theme = theme
@@ -113,7 +113,7 @@ struct ResultsView: View {
     private var restaurantListView: some View {
         List {
             ForEach(restaurants) { restaurant in
-                RestaurantRow(restaurant: restaurant)
+                SearchResultRow(restaurant: restaurant)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         selectedRestaurant = restaurant
@@ -134,8 +134,8 @@ struct ResultsView: View {
     }
 }
 
-struct RestaurantRow: View {
-    let restaurant: Restaurant
+struct SearchResultRow: View {
+    let restaurant: HotPepperRestaurant
     
     var body: some View {
         HStack(spacing: 16) {

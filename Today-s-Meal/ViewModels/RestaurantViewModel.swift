@@ -4,8 +4,8 @@ import CoreLocation
 
 class RestaurantViewModel: ObservableObject {
     // Published properties
-    @Published var restaurants: [Restaurant] = []
-    @Published var selectedRestaurant: Restaurant?
+    @Published var restaurants: [HotPepperRestaurant] = []
+    @Published var selectedRestaurant: HotPepperRestaurant?
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var searchRadius: Double = 1000 // 기본값 1000m
@@ -120,7 +120,7 @@ class RestaurantViewModel: ObservableObject {
         searchRestaurants(lat: location.coordinate.latitude, lng: location.coordinate.longitude)
     }
     
-    func selectRestaurant(_ restaurant: Restaurant) {
+    func selectRestaurant(_ restaurant: HotPepperRestaurant) {
         selectedRestaurant = restaurant
     }
     

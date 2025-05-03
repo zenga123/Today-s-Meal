@@ -11,7 +11,7 @@ struct Results: Codable {
     let resultsAvailable: Int
     let resultsReturned: String
     let resultsStart: Int
-    let shop: [Restaurant]
+    let shop: [HotPepperRestaurant]
     
     enum CodingKeys: String, CodingKey {
         case apiVersion = "api_version"
@@ -23,7 +23,7 @@ struct Results: Codable {
 }
 
 // MARK: - Restaurant
-struct Restaurant: Codable, Identifiable {
+struct HotPepperRestaurant: Codable, Identifiable {
     let id: String
     let name: String
     let logoImage: String?

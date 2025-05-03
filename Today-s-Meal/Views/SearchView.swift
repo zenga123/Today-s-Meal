@@ -7,6 +7,7 @@ struct SearchView: View {
     // 환경 객체에서 위치 서비스 사용
     @EnvironmentObject var locationService: LocationService
     @StateObject private var viewModel = RestaurantViewModel()
+    @StateObject private var themeViewModel = RestaurantListViewModel()
     @State private var navigateToResults = false
     @State private var selectedRangeIndex = 2 // Default to 1000m
     @State private var searchRadius: Double = 1000 // 기본 반경 1000m
@@ -42,7 +43,116 @@ struct SearchView: View {
                         viewModel: viewModel
                     )
                     
-                    FoodThemeSection(selectedTheme: $selectedTheme)
+                    FoodThemeSection(selectedTheme: $selectedTheme, searchRadius: searchRadius)
+                    
+                    // 선택된 테마가 있으면 음식점 목록 표시
+                    if let theme = selectedTheme {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("\(theme == "izakaya" ? "居酒屋" : theme) 음식점")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                Text("\(searchRadius/1000, specifier: "%.1f")km 이내")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            
+                            if themeViewModel.isLoading && themeViewModel.restaurants.isEmpty {
+                                // 처음 로딩할 때만 전체 로딩 뷰 표시
+                                HStack {
+                                    Spacer()
+                                    VStack(spacing: 12) {
+                                        ProgressView()
+                                            .tint(.white)
+                                        Text("실제 음식점 검색 중...")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.vertical, 32)
+                            } else if themeViewModel.restaurants.isEmpty {
+                                VStack(spacing: 16) {
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 40))
+                                        .foregroundColor(.gray)
+                                    
+                                    Text("검색 결과가 없습니다")
+                                        .font(.headline)
+                                        .foregroundColor(.gray)
+                                    
+                                    Text("다른 테마나 검색 반경을 변경해보세요")
+                                        .font(.caption)
+                                        .foregroundColor(.gray.opacity(0.8))
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 40)
+                            } else {
+                                // 레스토랑 리스트
+                                LazyVStack(spacing: 0) {
+                                    // 식당 목록 로딩 중 상태 표시 (헤더)
+                                    if themeViewModel.isLoading {
+                                        HStack {
+                                            Spacer()
+                                            Text("더 많은 음식점 검색 중...")
+                                                .font(.caption)
+                                                .foregroundColor(.gray.opacity(0.7))
+                                            Spacer()
+                                        }
+                                        .padding(.vertical, 8)
+                                    }
+                                    
+                                    ForEach(themeViewModel.restaurants) { restaurant in
+                                        RestaurantRow(
+                                            restaurant: restaurant, 
+                                            distance: restaurant.distance(from: CLLocation(
+                                                latitude: locationService.currentLocation?.coordinate.latitude ?? 0,
+                                                longitude: locationService.currentLocation?.coordinate.longitude ?? 0
+                                            ))
+                                        )
+                                        .onAppear {
+                                            // 마지막 항목에서 2개 앞에 도달하면 다음 페이지 로드 시작
+                                            // 이렇게 하면 사용자가 마지막 항목에 도달하기 전에 미리 로딩
+                                            if let lastIndex = themeViewModel.restaurants.indices.last,
+                                               let currentIndex = themeViewModel.restaurants.firstIndex(where: { $0.id == restaurant.id }),
+                                               currentIndex >= lastIndex - 2 {
+                                                themeViewModel.loadMoreIfNeeded()
+                                            }
+                                        }
+                                    }
+                                    
+                                    // 식당 목록 로딩 중 상태 표시 (푸터)
+                                    if themeViewModel.isLoading {
+                                        HStack {
+                                            Spacer()
+                                            ProgressView()
+                                                .frame(maxWidth: .infinity, maxHeight: 40)
+                                                .tint(.white)
+                                            Spacer()
+                                        }
+                                    }
+                                    
+                                    // 마지막 페이지 도달 시 더 이상 결과가 없음을 표시
+                                    if !themeViewModel.isLoading && !themeViewModel.hasMorePages && !themeViewModel.restaurants.isEmpty {
+                                        HStack {
+                                            Spacer()
+                                            Text("모든 결과를 불러왔습니다")
+                                                .font(.caption)
+                                                .foregroundColor(.gray.opacity(0.7))
+                                                .padding(.vertical, 16)
+                                            Spacer()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.bottom, 20)
+                    }
                     
                     // Error message
                     if let errorMessage = viewModel.errorMessage {
@@ -76,6 +186,16 @@ struct SearchView: View {
                 if let location = newLocation {
                     viewModel.currentLocation = location
                     print("위치 업데이트: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+                    
+                    // 테마가 선택되어 있으면 음식점 검색
+                    if let theme = selectedTheme {
+                        themeViewModel.searchRestaurants(
+                            theme: theme,
+                            latitude: location.coordinate.latitude,
+                            longitude: location.coordinate.longitude,
+                            radius: searchRadius
+                        )
+                    }
                 }
             }
             .onChange(of: selectedRangeIndex) { newValue in
@@ -91,6 +211,16 @@ struct SearchView: View {
                         lat: location.coordinate.latitude,
                         lng: location.coordinate.longitude
                     )
+                    
+                    // 테마가 선택되어 있으면 테마별 음식점도 검색
+                    if let theme = selectedTheme {
+                        themeViewModel.searchRestaurants(
+                            theme: theme,
+                            latitude: location.coordinate.latitude,
+                            longitude: location.coordinate.longitude,
+                            radius: searchRadius
+                        )
+                    }
                 }
             }
             .onChange(of: searchRadius) { newRadius in
@@ -103,6 +233,17 @@ struct SearchView: View {
                 if selectedRangeIndex != closestIndex {
                     selectedRangeIndex = closestIndex
                     viewModel.searchRadius = Double(viewModel.rangeOptions[closestIndex].value)
+                }
+            }
+            .onChange(of: selectedTheme) { newTheme in
+                if let theme = newTheme, let location = locationService.currentLocation {
+                    // 테마가 선택되면 해당 테마의 음식점 검색
+                    themeViewModel.searchRestaurants(
+                        theme: theme,
+                        latitude: location.coordinate.latitude,
+                        longitude: location.coordinate.longitude,
+                        radius: searchRadius
+                    )
                 }
             }
             .alert("위치 권한 필요", isPresented: $showLocationPermissionAlert) {

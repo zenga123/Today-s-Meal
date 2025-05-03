@@ -2,7 +2,7 @@ import SwiftUI
 import MapKit
 
 struct DetailView: View {
-    let restaurant: Restaurant
+    let restaurant: HotPepperRestaurant
     @State private var showMap = false
     @EnvironmentObject var locationService: LocationService
     

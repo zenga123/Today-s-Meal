@@ -36,7 +36,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     var radiusChangeCallback: ((Double) -> Void)?
     
     // 검색 결과를 부모 뷰에 알리기 위한 콜백
-    var searchResultsCallback: (([Restaurant]) -> Void)?
+    var searchResultsCallback: (([HotPepperRestaurant]) -> Void)?
     
     // 프로그램적인 줌 변경 여부 플래그
     private var isProgrammaticZoomChange: Bool = false
@@ -56,7 +56,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     private var scaleBarLabel: UILabel!
     
     // 식당 목록
-    var restaurants: [Restaurant] = [] {
+    var restaurants: [HotPepperRestaurant] = [] {
         didSet {
             // 식당 목록이 업데이트될 때마다 지도에 표시
             updateRestaurantMarkers()
@@ -780,7 +780,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     }
     
     // 식당 마커 추가
-    private func addRestaurantMarker(_ restaurant: Restaurant) {
+    private func addRestaurantMarker(_ restaurant: HotPepperRestaurant) {
         let position = CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)
         let marker = GMSMarker(position: position)
         
@@ -934,7 +934,7 @@ struct NativeMapView: UIViewControllerRepresentable {
     // 자동 검색 여부 (옵션)
     var autoSearch: Bool = true
     // 검색 결과 콜백 (옵션)
-    var onSearchResults: (([Restaurant]) -> Void)?
+    var onSearchResults: (([HotPepperRestaurant]) -> Void)?
     
     // UIViewController 생성
     func makeUIViewController(context: Context) -> MapViewController {
