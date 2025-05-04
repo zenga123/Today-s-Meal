@@ -25,7 +25,7 @@ struct EmptyCirclePlaceholder: View {
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
+                                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1.5)
                                 )
                                 .onAppear {
                                     print("✅ 이자카야 이미지 로드 시도")
@@ -40,7 +40,7 @@ struct EmptyCirclePlaceholder: View {
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
+                                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 1.5)
                                 )
                         }
                         
@@ -51,10 +51,10 @@ struct EmptyCirclePlaceholder: View {
                             .foregroundColor(.gray.opacity(0.7))
                     }
                     
-                    // 선택 표시 테두리
-                    if isSelected {
+                    // 선택 표시 테두리 - 이미지가 없을 때만 표시
+                    if isSelected && !useCustomImage {
                         Circle()
-                            .stroke(Color.orange, lineWidth: 3)
+                            .stroke(Color.orange, lineWidth: 1.5)
                             .frame(width: 64, height: 64)
                     }
                 }
