@@ -196,12 +196,6 @@ struct FoodThemeSection: View {
                     Spacer() // 빈 공간
                     Spacer() // 빈 공간
                 }
-                
-                // 사용 방법 안내
-                Text("* 이미지 추가 방법: Assets.xcassets에 이미지를 추가한 후, 코드에서 useCustomImage: true 옵션을 추가하면 됩니다.")
-                    .font(.caption2)
-                    .foregroundColor(.gray)
-                    .padding(.top, 8)
             }
         }
         .padding(.horizontal)
