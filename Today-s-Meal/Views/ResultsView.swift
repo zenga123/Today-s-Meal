@@ -47,7 +47,7 @@ struct ResultsView: View {
             } else {
                 if showMapView {
                     // 지도 뷰
-                    RestaurantMapView(
+                    MainRestaurantMapView(
                         restaurants: restaurants, 
                         userLocation: locationService.currentLocation,
                         searchRadius: searchRadius

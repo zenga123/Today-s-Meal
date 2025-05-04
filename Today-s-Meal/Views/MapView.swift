@@ -1,7 +1,7 @@
 import SwiftUI
 import GoogleMaps
 
-struct RestaurantMapView: View {
+struct MainRestaurantMapView: View {
     var restaurants: [HotPepperRestaurant]
     var searchRadius: Double = 1000 // 기본값 1000m 
     @State private var selectedRestaurant: HotPepperRestaurant?

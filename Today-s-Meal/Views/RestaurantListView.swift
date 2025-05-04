@@ -352,6 +352,7 @@ class RestaurantListViewModel: ObservableObject {
             let category = hotPepperRest.genre?.name ?? theme
             let imageUrl = hotPepperRest.photo?.mobile?.l
             let address = hotPepperRest.address ?? "주소 정보 없음"
+            let access = hotPepperRest.access // 오시는 길 정보 추가
             
             // 현재 위치에서 식당까지의 거리 계산 (미터 단위)
             let restaurantLocation = CLLocation(latitude: hotPepperRest.lat, longitude: hotPepperRest.lng)
@@ -372,7 +373,8 @@ class RestaurantListViewModel: ObservableObject {
                 category: category,
                 latitude: hotPepperRest.lat,
                 longitude: hotPepperRest.lng,
-                imageUrl: imageUrl
+                imageUrl: imageUrl,
+                access: access  // 오시는 길 정보 추가
             )
             
             return restaurant

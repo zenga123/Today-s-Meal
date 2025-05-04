@@ -527,4 +527,64 @@ class RestaurantAPI {
         // 첫 페이지부터 로드 시작
         loadPage(start: 1)
     }
+    
+    // 식당 ID로 상세 정보 조회
+    func getRestaurantDetail(
+        id: String,
+        completion: @escaping (HotPepperRestaurant?) -> Void
+    ) {
+        print("🔍 식당 ID로 상세 정보 조회: \(id)")
+        
+        var components = URLComponents(string: baseURL)
+        
+        // 식당 ID로 검색
+        components?.queryItems = [
+            URLQueryItem(name: "key", value: apiKey),
+            URLQueryItem(name: "id", value: id),
+            URLQueryItem(name: "format", value: "json")
+        ]
+        
+        guard let url = components?.url else {
+            print("❌ API 오류: 잘못된 URL 생성")
+            completion(nil)
+            return
+        }
+        
+        print("📡 상세 정보 API 요청 URL: \(url.absoluteString)")
+        
+        URLSession.shared.dataTask(with: url) { data, response, error in
+            if let error = error {
+                print("❌ API 네트워크 오류: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            guard let data = data else {
+                print("❌ API 응답 데이터 없음")
+                completion(nil)
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 상세 정보 API 응답 상태 코드: \(httpResponse.statusCode)")
+            }
+            
+            do {
+                let decoder = JSONDecoder()
+                let response = try decoder.decode(HotPepperResponse.self, from: data)
+                
+                if response.results.shop.isEmpty {
+                    print("⚠️ 식당 ID에 해당하는 정보가 없음: \(id)")
+                    completion(nil)
+                } else {
+                    let restaurant = response.results.shop[0]
+                    print("✅ 식당 상세 정보 로드 완료: \(restaurant.name)")
+                    completion(restaurant)
+                }
+            } catch {
+                print("❌ 상세 정보 API 디코딩 오류: \(error)")
+                completion(nil)
+            }
+        }.resume()
+    }
 } 

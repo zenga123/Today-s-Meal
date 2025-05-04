@@ -11,6 +11,7 @@ struct Restaurant: Identifiable {
     let latitude: Double
     let longitude: Double
     let imageUrl: String?
+    let access: String?  // 오시는 길 정보 추가
     
     // 식당의 좌표를 CLLocationCoordinate2D로 반환
     var coordinate: CLLocationCoordinate2D {
@@ -38,6 +39,7 @@ struct RestaurantsResponse: Decodable {
         let latitude: Double
         let longitude: Double
         let imageUrl: String?
+        let access: String?  // 오시는 길 정보 추가
         
         // Restaurant 모델로 변환
         func toRestaurant() -> Restaurant {
@@ -50,7 +52,8 @@ struct RestaurantsResponse: Decodable {
                 category: category,
                 latitude: latitude,
                 longitude: longitude,
-                imageUrl: imageUrl
+                imageUrl: imageUrl,
+                access: access  // 오시는 길 정보 추가
             )
         }
     }
