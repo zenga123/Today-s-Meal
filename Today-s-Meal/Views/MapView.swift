@@ -3,7 +3,7 @@ import GoogleMaps
 
 struct MainRestaurantMapView: View {
     var restaurants: [HotPepperRestaurant]
-    var searchRadius: Double = 1000 // 기본값 1000m 
+    var searchRadius: Double = 300 // 기본값 300m (changed from 1000m)
     @State private var selectedRestaurant: HotPepperRestaurant?
     @State private var selectedRestaurantID: String? = nil
     
@@ -11,7 +11,7 @@ struct MainRestaurantMapView: View {
     @StateObject private var mapViewCoordinator = MapViewCoordinator()
     
     // 초기 위치 설정
-    init(restaurants: [HotPepperRestaurant], userLocation: CLLocation?, searchRadius: Double = 1000) {
+    init(restaurants: [HotPepperRestaurant], userLocation: CLLocation?, searchRadius: Double = 300) {
         self.restaurants = restaurants
         self.searchRadius = searchRadius
         
@@ -171,7 +171,7 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
     var centerLocation: CLLocation = CLLocation(latitude: 35.6812, longitude: 139.7671) // 도쿄 기본값
     var updateMapCenter: Bool = false
     var selectedRestaurantID: String?
-    var searchRadius: Double = 1000 // 기본값 1000m
+    var searchRadius: Double = 300 // 기본값 300m (changed from 1000m)
     var onMarkerTapped: ((String) -> Void)?
     private var markers: [String: GMSMarker] = [:]
     private var radiusCircle: GMSCircle?

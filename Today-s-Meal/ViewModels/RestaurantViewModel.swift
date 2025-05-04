@@ -8,7 +8,7 @@ class RestaurantViewModel: ObservableObject {
     @Published var selectedRestaurant: HotPepperRestaurant?
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var searchRadius: Double = 1000 // 기본값 1000m
+    @Published var searchRadius: Double = 300 // 기본값 300m (changed from 1000m)
     @Published var showMapView = false // 지도 보기/목록 보기 토글
     @Published var showDetailView = false // 식당 상세 페이지로 이동하는 상태 변수
     

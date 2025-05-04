@@ -12,8 +12,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 현재 위치
     var currentLocation: CLLocation?
     
-    // 검색 반경 (미터 단위)
-    var searchRadius: Double = 1000 {
+    // 검색 반경 (미터 단위) - 기본값을 300m로 변경
+    var searchRadius: Double = 300 {
         didSet {
             // oldValue와 비교하는 조건은 유지 (불필요한 업데이트 방지)
             if abs(oldValue - searchRadius) > 0.1 {
@@ -436,6 +436,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 스케일바 거리를 기반으로 검색 반경 업데이트 (완전 동기화)
     private func updateSearchRadiusBasedOnScale(_ scaleDistance: Double) {
+        // [기능 비활성화] 핀치 줌으로 인한 반경 변경 기능을 제거
+        // 원래 코드는 주석 처리
+        /*
         // 검색 반경을 스케일바 거리와 1:1로 매칭 (2배가 아닌 직접 사용)
         // 최소값 300m, 최대값 3000m로 제한
         let calculatedRadius = min(max(scaleDistance, 300.0), 3000.0)
@@ -471,6 +474,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             radiusChangeCallback?(closestRadius)
             // --- 추가된 코드 끝 ---
         }
+        */
+        
+        // 반경 변경 없이 현재 반경을 표시만 함 (디버깅용)
+        print("📏 핀치 줌 감지됨, 반경 변경 기능 비활성화 (현재 반경: \(searchRadius)m)")
     }
     
     // 스케일 바 업데이트
@@ -550,8 +557,8 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 현재 위치가 설정되어 있고, 프로그램적 줌 변경이 아닐 때만 스케일 기반 반경 업데이트
         if !isProgrammaticZoomChange, let _ = currentLocation { // 플래그 확인 및 위치 확인
-             // 이전에 주석 처리했던 호출 재활성화
-             updateSearchRadiusBasedOnScale(displayDistance)
+             // 핀치 줌에 의한 반경 변경 기능 비활성화
+             // updateSearchRadiusBasedOnScale(displayDistance)
         }
     }
     

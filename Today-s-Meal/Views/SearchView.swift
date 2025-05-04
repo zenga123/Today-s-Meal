@@ -9,8 +9,8 @@ struct SearchView: View {
     @StateObject private var viewModel = RestaurantViewModel()
     @StateObject private var themeViewModel = RestaurantListViewModel()
     @State private var navigateToResults = false
-    @State private var selectedRangeIndex = 2 // Default to 1000m
-    @State private var searchRadius: Double = 1000 // 기본 반경 1000m
+    @State private var selectedRangeIndex = 0 // Default to 300m (changed from 2)
+    @State private var searchRadius: Double = 300 // 기본 반경 300m (changed from 1000m)
     @State private var showLocationPermissionAlert = false
     @State private var selectedTheme: String? = nil // 선택된 테마
     @State private var showDetailView = false // 식당 상세 페이지로 이동하는 상태 변수
