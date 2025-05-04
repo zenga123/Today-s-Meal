@@ -793,14 +793,24 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let position = CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)
         let marker = GMSMarker(position: position)
         
-        // 마커 제목 및 스니펫 설정
+        // 마커 제목 및 스니펫 설정 - Optional 문자열 방지
         marker.title = restaurant.name
-        marker.snippet = restaurant.catchPhrase
+        
+        // Optional 값 안전하게 처리
+        if let catchPhrase = restaurant.catchPhrase {
+            marker.snippet = catchPhrase
+        } else {
+            marker.snippet = "정보 없음"
+        }
         
         // 거리 표시 (옵션)
         if let distance = restaurant.distance {
             let distanceText = distance < 1000 ? "\(distance)m" : String(format: "%.1fkm", Double(distance) / 1000.0)
-            marker.snippet = "\(distanceText) - \(restaurant.catchPhrase)"
+            if let catchPhrase = restaurant.catchPhrase {
+                marker.snippet = "\(distanceText) - \(catchPhrase)"
+            } else {
+                marker.snippet = "\(distanceText)"
+            }
         }
         
         // 마커 아이콘 커스터마이징 (음식점 아이콘 사용)
@@ -817,6 +827,36 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
         // 마커의 정보 창을 표시
         return false // false를 반환하면 기본 정보 창이 표시됨
+    }
+    
+    // 마커 인포윈도우 커스터마이징
+    func mapView(_ mapView: GMSMapView, markerInfoWindow marker: GMSMarker) -> UIView? {
+        // 커스텀 인포윈도우 생성
+        let infoWindow = UIView(frame: CGRect(x: 0, y: 0, width: 250, height: 80))
+        infoWindow.backgroundColor = UIColor.white
+        infoWindow.layer.cornerRadius = 10
+        infoWindow.layer.shadowColor = UIColor.black.cgColor
+        infoWindow.layer.shadowOffset = CGSize(width: 0, height: 2)
+        infoWindow.layer.shadowOpacity = 0.2
+        infoWindow.layer.shadowRadius = 4
+        
+        // 타이틀 레이블
+        let titleLabel = UILabel(frame: CGRect(x: 15, y: 10, width: 220, height: 30))
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        titleLabel.textColor = UIColor.black
+        titleLabel.text = marker.title ?? "이름 없음"
+        
+        // 스니펫 레이블
+        let snippetLabel = UILabel(frame: CGRect(x: 15, y: 40, width: 220, height: 30))
+        snippetLabel.font = UIFont.systemFont(ofSize: 13)
+        snippetLabel.textColor = UIColor.darkGray
+        snippetLabel.text = marker.snippet ?? "정보 없음"
+        
+        // 레이블 추가
+        infoWindow.addSubview(titleLabel)
+        infoWindow.addSubview(snippetLabel)
+        
+        return infoWindow
     }
     
     // 식당 검색 실행

@@ -109,6 +109,27 @@ struct GoogleMapView: UIViewRepresentable {
         mapView.isMyLocationEnabled = true
         mapView.settings.myLocationButton = true
         
+        // 중요: 마커 탭 시 정보창이 표시되지 않도록 설정
+        mapView.settings.consumesGesturesInView = false
+        // 기본 인포윈도우 표시 방지
+        mapView.settings.allowScrollGesturesDuringRotateOrZoom = true
+        
+        // 인포윈도우 타일 레이어 비활성화
+        mapView.settings.compassButton = true  // 불필요한 설정이지만 타일 레이어 리프레시 유도
+        
+        // 기본 인포윈도우 숨기기 위한 투명 오버레이 추가
+        let overlay = UIView(frame: .zero)
+        overlay.backgroundColor = .clear
+        overlay.isUserInteractionEnabled = false
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        mapView.addSubview(overlay)
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: mapView.topAnchor),
+            overlay.leadingAnchor.constraint(equalTo: mapView.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: mapView.trailingAnchor),
+            overlay.bottomAnchor.constraint(equalTo: mapView.bottomAnchor)
+        ])
+        
         // 뷰 컨트롤러 연결
         coordinator.mapView = mapView
         coordinator.onMarkerTapped = { id in
@@ -154,6 +175,8 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
     var onMarkerTapped: ((String) -> Void)?
     private var markers: [String: GMSMarker] = [:]
     private var radiusCircle: GMSCircle?
+    private var infoWindow: UIView? // 커스텀 인포윈도우
+    private var infoMarker: GMSMarker? // 인포윈도우가 표시된 마커
     
     // 마커 업데이트
     func updateMarkers() {
@@ -162,6 +185,11 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         // 기존 마커 제거
         mapView.clear()
         markers.removeAll()
+        
+        // 커스텀 인포윈도우 제거
+        infoWindow?.removeFromSuperview()
+        infoWindow = nil
+        infoMarker = nil
         
         // 검색 반경 원 추가
         let circle = GMSCircle(position: centerLocation.coordinate, radius: CLLocationDistance(searchRadius))
@@ -175,8 +203,15 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         for restaurant in restaurants {
             let marker = GMSMarker()
             marker.position = CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)
-            marker.title = restaurant.name
-            marker.snippet = restaurant.access
+            
+            // 중요: 모든 마커 텍스트 속성 완전히 제거
+            marker.title = nil
+            marker.snippet = nil
+            
+            // 기본 인포윈도우 작동 방지 (마커 위에 인포윈도우 표시되지 않게)
+            marker.infoWindowAnchor = CGPoint(x: 0, y: 0)
+            marker.appearAnimation = .none
+            
             marker.userData = restaurant.id
             
             // 선택된 음식점 강조 표시
@@ -191,15 +226,44 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
             marker.map = mapView
             markers[restaurant.id] = marker
         }
+        
+        // 선택된 마커가 있으면 인포윈도우 표시
+        if let selectedID = selectedRestaurantID, 
+           let marker = markers[selectedID],
+           let restaurant = restaurants.first(where: { $0.id == selectedID }) {
+            showInfoWindow(for: marker, restaurant: restaurant)
+        }
     }
     
-    // 마커 탭 이벤트 처리
+    // 마커 인포윈도우 미표시 설정
+    func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) -> Bool {
+        // 기본 인포윈도우 탭 이벤트 가로채기 (표시하지 않음)
+        return true
+    }
+    
+    // 마커 탭 시 인포윈도우 표시 여부 결정
     func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
-        guard let restaurantID = marker.userData as? String else { return false }
+        guard let restaurantID = marker.userData as? String,
+              let restaurant = restaurants.first(where: { $0.id == restaurantID }) else { 
+            return false 
+        }
+        
+        // 이미 선택된 마커라면 인포윈도우 숨기기
+        if selectedRestaurantID == restaurantID {
+            hideInfoWindow()
+            selectedRestaurantID = nil
+            onMarkerTapped?(restaurantID)
+            updateMarkers()
+            return true
+        }
+        
         selectedRestaurantID = restaurantID
         
         // 선택된 마커 중심으로 카메라 이동
         mapView.animate(toLocation: marker.position)
+        
+        // 커스텀 인포윈도우 표시
+        showInfoWindow(for: marker, restaurant: restaurant)
         
         // 콜백 호출
         onMarkerTapped?(restaurantID)
@@ -207,7 +271,141 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         // 마커 업데이트
         updateMarkers()
         
+        // 중요: 기본 인포윈도우가 표시되지 않도록 true 반환
         return true
+    }
+    
+    // 인포윈도우 표시 막기 (빈 뷰 반환)
+    func mapView(_ mapView: GMSMapView, markerInfoWindow marker: GMSMarker) -> UIView? {
+        // 완전히 투명한 뷰 반환 (화면에 표시되지 않음)
+        let emptyView = UIView(frame: CGRect.zero)
+        emptyView.backgroundColor = UIColor.clear
+        emptyView.isHidden = true
+        return emptyView
+    }
+    
+    // 인포윈도우 표시 시도 시 가로채기
+    func mapView(_ mapView: GMSMapView, willHandle boolValue: Bool) -> Bool {
+        // 기본 처리 차단
+        return true
+    }
+    
+    // 맵 탭 시 인포윈도우 숨기기
+    func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
+        hideInfoWindow()
+        selectedRestaurantID = nil
+        onMarkerTapped?("")
+        updateMarkers()
+    }
+    
+    // 커스텀 인포윈도우 표시
+    private func showInfoWindow(for marker: GMSMarker, restaurant: HotPepperRestaurant) {
+        // 기존 인포윈도우 제거
+        hideInfoWindow()
+        
+        guard let mapView = self.mapView else { return }
+        
+        // 커스텀 인포윈도우 생성
+        let infoWindow = UIView(frame: CGRect(x: 0, y: 0, width: 250, height: 70))
+        infoWindow.backgroundColor = UIColor.white
+        infoWindow.layer.cornerRadius = 8
+        infoWindow.layer.shadowColor = UIColor.black.cgColor
+        infoWindow.layer.shadowOpacity = 0.3
+        infoWindow.layer.shadowOffset = CGSize(width: 0, height: 2)
+        infoWindow.layer.shadowRadius = 3
+        infoWindow.layer.borderWidth = 1
+        infoWindow.layer.borderColor = UIColor.lightGray.cgColor
+        
+        // 삼각형 표시기 추가 (마커와 인포윈도우 연결)
+        let triangleView = UIView(frame: CGRect(x: infoWindow.frame.width/2 - 10, y: infoWindow.frame.height - 1, width: 20, height: 10))
+        triangleView.backgroundColor = .clear
+        
+        let trianglePath = UIBezierPath()
+        trianglePath.move(to: CGPoint(x: 0, y: 0))
+        trianglePath.addLine(to: CGPoint(x: 20, y: 0))
+        trianglePath.addLine(to: CGPoint(x: 10, y: 10))
+        trianglePath.close()
+        
+        let triangleLayer = CAShapeLayer()
+        triangleLayer.path = trianglePath.cgPath
+        triangleLayer.fillColor = UIColor.white.cgColor
+        triangleView.layer.addSublayer(triangleLayer)
+        
+        infoWindow.addSubview(triangleView)
+        
+        // 레스토랑 이름 레이블
+        let nameLabel = UILabel(frame: CGRect(x: 15, y: 10, width: 220, height: 25))
+        nameLabel.text = restaurant.name
+        nameLabel.font = UIFont.systemFont(ofSize: 14, weight: .bold)
+        nameLabel.textColor = UIColor.black
+        nameLabel.adjustsFontSizeToFitWidth = true
+        nameLabel.minimumScaleFactor = 0.75
+        
+        // 접근 정보 레이블
+        let accessLabel = UILabel(frame: CGRect(x: 15, y: 35, width: 220, height: 25))
+        accessLabel.text = restaurant.access ?? "정보 없음"
+        accessLabel.font = UIFont.systemFont(ofSize: 12)
+        accessLabel.textColor = UIColor.darkGray
+        accessLabel.adjustsFontSizeToFitWidth = true
+        accessLabel.minimumScaleFactor = 0.75
+        
+        infoWindow.addSubview(nameLabel)
+        infoWindow.addSubview(accessLabel)
+        
+        // 애니메이션 효과 추가
+        infoWindow.alpha = 0
+        infoWindow.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+        
+        // 인포윈도우 위치 계산 (마커 위에 표시)
+        let point = mapView.projection.point(for: marker.position)
+        let infoWindowPoint = CGPoint(
+            x: point.x - infoWindow.frame.width / 2,
+            y: point.y - infoWindow.frame.height - 15 // 마커 위에 표시하도록 조정
+        )
+        infoWindow.frame.origin = infoWindowPoint
+        
+        // 맵뷰에 추가
+        mapView.addSubview(infoWindow)
+        
+        // 애니메이션으로 표시
+        UIView.animate(withDuration: 0.3) {
+            infoWindow.alpha = 1
+            infoWindow.transform = .identity
+        }
+        
+        // 참조 저장
+        self.infoWindow = infoWindow
+        self.infoMarker = marker
+        
+        print("커스텀 인포윈도우 표시: \(restaurant.name)")
+    }
+    
+    // 인포윈도우 숨기기
+    private func hideInfoWindow() {
+        if let infoWindow = self.infoWindow {
+            // 애니메이션으로 숨기기
+            UIView.animate(withDuration: 0.2, animations: {
+                infoWindow.alpha = 0
+                infoWindow.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
+            }) { _ in
+                infoWindow.removeFromSuperview()
+                self.infoWindow = nil
+                self.infoMarker = nil
+            }
+        } else {
+            infoWindow?.removeFromSuperview()
+            infoWindow = nil
+            infoMarker = nil
+        }
+    }
+    
+    // 카메라 위치 변경 시 인포윈도우 위치 업데이트
+    func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
+        if let marker = infoMarker, let restaurant = restaurants.first(where: { $0.id == selectedRestaurantID }) {
+            // 기존 인포윈도우 제거 후 다시 표시 (위치 재계산)
+            infoWindow?.removeFromSuperview()
+            showInfoWindow(for: marker, restaurant: restaurant)
+        }
     }
 }
 
