@@ -312,13 +312,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let camera = GMSCameraPosition.camera(withTarget: position, zoom: 15)
         mapView.animate(to: camera)
         
-        // 현재 위치에 마커 추가
-        let marker = GMSMarker()
-        marker.position = position
-        marker.title = "현재 위치"
-        marker.snippet = "여기에 있습니다"
-        marker.map = mapView
-        
         // 반경 원 업데이트
         updateRadiusCircle()
         
