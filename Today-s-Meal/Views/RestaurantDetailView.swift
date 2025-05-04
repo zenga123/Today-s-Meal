@@ -712,7 +712,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     line.setMap(map);
                     
                     // 마커 추가
-                    const destinationMarker = new google.maps.Marker({
+                    const marker = new google.maps.Marker({
                         position: destination,
                         map: map,
                         title: "\(destinationName)",
@@ -825,7 +825,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     directionsService = new google.maps.DirectionsService();
                     directionsRenderer = new google.maps.DirectionsRenderer({
                         map: map,
-                        suppressMarkers: false,
+                        suppressMarkers: true,  // 기본 마커 표시 안 함
                         polylineOptions: {
                             strokeColor: '#4285F4',
                             strokeWeight: 5
@@ -866,6 +866,21 @@ struct GoogleMapsWebView: UIViewRepresentable {
                             const leg = route.legs[0];
                             const distance = leg.distance.text;
                             const duration = leg.duration.text;
+                            
+                            // 사용자 위치에 A 마커 추가
+                            const startMarker = new google.maps.Marker({
+                                position: userLocation,
+                                map: map,
+                                title: "현재 위치",
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    fillColor: '#4285F4',
+                                    fillOpacity: 1,
+                                    strokeColor: '#FFFFFF',
+                                    strokeWeight: 2,
+                                    scale: 8
+                                }
+                            });
                             
                             sendToiOS(`경로 계산 성공: 거리 ${distance}, 소요 시간 ${duration}`);
                             
