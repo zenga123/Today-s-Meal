@@ -385,9 +385,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 깔끔한 반올림 거리 계산 (구글 맵 스타일)
     private func calculateNiceRoundedDistance(for distance: Double) -> Double {
-        // 최소 거리를 300m로 제한
-        if distance < 300 {
-            return 300.0
+        // 300m 이하의 거리도 지원하도록 수정
+        if distance < 50 {
+            return 50.0
         }
         
         // 최대 거리를 3000m로 제한
@@ -396,7 +396,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         }
         
         let niceDistances: [Double] = [
-            300, 500, 1000, 2000, 3000
+            50, 100, 200, 300, 500, 1000, 2000, 3000
         ]
         
         // 적절한 반올림 거리 찾기
@@ -519,11 +519,14 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let targetBarLengthPoints: Double = 100.0 // 원하는 막대 길이 (포인트)
         let approxDistanceForTargetLength = targetBarLengthPoints / pointsPerMeter
         
-        // 3. 표시할 '깔끔한' 거리 선택 - 최소값 300m, 최대값 3000m으로 제한
-        let displayDistance = min(max(calculateNiceRoundedDistance(for: approxDistanceForTargetLength), 300.0), 3000.0)
+        // 3. 표시할 '깔끔한' 거리 선택 - 최소값 50m, 최대값 3000m으로 제한
+        let displayDistance = min(max(calculateNiceRoundedDistance(for: approxDistanceForTargetLength), 50.0), 3000.0)
         
         // 4. 선택된 거리를 표시하기 위한 실제 막대 길이 계산
         let actualBarLengthPoints = pointsPerMeter * displayDistance
+
+        // 최대 길이 제한 (화면 너비의 50%를 넘지 않도록)
+        let maxBarLength = min(actualBarLengthPoints, screenWidthPoints * 0.5)
         
         // 5. 텍스트 설정
         let displayText: String
@@ -551,7 +554,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                 existingConstraint.isActive = false
                 scaleBarLine.removeConstraint(existingConstraint)
             }
-            let newLineConstraint = scaleBarLine.widthAnchor.constraint(equalToConstant: CGFloat(actualBarLengthPoints))
+            let newLineConstraint = scaleBarLine.widthAnchor.constraint(equalToConstant: CGFloat(maxBarLength))
             newLineConstraint.isActive = true
         }
         
