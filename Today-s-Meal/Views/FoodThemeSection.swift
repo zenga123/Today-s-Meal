@@ -51,7 +51,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "ダイニングバー・バル", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "ダイニングバー・バル"
                     ) {
                         selectedTheme = selectedTheme == "ダイニングバー・バル" ? nil : "ダイニングバー・バル"
@@ -59,7 +59,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "創作料理", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "創作料理"
                     ) {
                         selectedTheme = selectedTheme == "創作料理" ? nil : "創作料理"
@@ -67,7 +67,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "和食", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "和食"
                     ) {
                         selectedTheme = selectedTheme == "和食" ? nil : "和食"
@@ -79,7 +79,7 @@ struct FoodThemeSection: View {
                 HStack(spacing: 12) {
                     EmptyCirclePlaceholder(
                         label: "洋食", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "洋食"
                     ) {
                         selectedTheme = selectedTheme == "洋食" ? nil : "洋食"
@@ -87,7 +87,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "イタリアン・フレンチ", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "イタリアン・フレンチ"
                     ) {
                         selectedTheme = selectedTheme == "イタリアン・フレンチ" ? nil : "イタリアン・フレンチ"
@@ -95,7 +95,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "中華", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "中華"
                     ) {
                         selectedTheme = selectedTheme == "中華" ? nil : "中華"
@@ -103,7 +103,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "焼肉・ホルモン", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "焼肉・ホルモン"
                     ) {
                         selectedTheme = selectedTheme == "焼肉・ホルモン" ? nil : "焼肉・ホルモン"
@@ -115,7 +115,7 @@ struct FoodThemeSection: View {
                 HStack(spacing: 12) {
                     EmptyCirclePlaceholder(
                         label: "韓国料理", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "韓国料理"
                     ) {
                         selectedTheme = selectedTheme == "韓国料理" ? nil : "韓国料理"
@@ -123,7 +123,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "アジア・エスニック料理", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "アジア・エスニック料理"
                     ) {
                         selectedTheme = selectedTheme == "アジア・エスニック料理" ? nil : "アジア・エスニック料理"
@@ -131,7 +131,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "各国料理", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "各国料理"
                     ) {
                         selectedTheme = selectedTheme == "各国料理" ? nil : "各国料理"
@@ -139,7 +139,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "カラオケ・パーティ", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "カラオケ・パーティ"
                     ) {
                         selectedTheme = selectedTheme == "カラオケ・パーティ" ? nil : "カラオケ・パーティ"
@@ -151,7 +151,7 @@ struct FoodThemeSection: View {
                 HStack(spacing: 12) {
                     EmptyCirclePlaceholder(
                         label: "バー・カクテル", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "バー・カクテル"
                     ) {
                         selectedTheme = selectedTheme == "バー・カクテル" ? nil : "バー・カクテル"
@@ -159,7 +159,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "ラーメン", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "ラーメン"
                     ) {
                         selectedTheme = selectedTheme == "ラーメン" ? nil : "ラーメン"
@@ -167,7 +167,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "お好み焼き・もんじゃ", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "お好み焼き・もんじゃ"
                     ) {
                         selectedTheme = selectedTheme == "お好み焼き・もんじゃ" ? nil : "お好み焼き・もんじゃ"
@@ -175,7 +175,7 @@ struct FoodThemeSection: View {
                     
                     EmptyCirclePlaceholder(
                         label: "カフェ・スイーツ", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "カフェ・スイーツ"
                     ) {
                         selectedTheme = selectedTheme == "カフェ・スイーツ" ? nil : "カフェ・スイーツ"
@@ -187,7 +187,7 @@ struct FoodThemeSection: View {
                 HStack(spacing: 12) {
                     EmptyCirclePlaceholder(
                         label: "その他グルメ", 
-                        useCustomImage: false,
+                        useCustomImage: true,
                         isSelected: selectedTheme == "その他グルメ"
                     ) {
                         selectedTheme = selectedTheme == "その他グルメ" ? nil : "その他グルメ"

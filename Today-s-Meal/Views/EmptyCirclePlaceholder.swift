@@ -16,9 +16,9 @@ struct EmptyCirclePlaceholder: View {
                         .frame(width: 60, height: 60)
                     
                     if useCustomImage {
-                        // 에셋에서 이미지 로드 시도
-                        if let uiImage = UIImage(named: label) {
-                            Image(uiImage: uiImage)
+                        // 이자카야인 경우 추가한 이미지 사용
+                        if label == "izakaya" {
+                            Image("izakaya")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 60, height: 60)
@@ -27,20 +27,23 @@ struct EmptyCirclePlaceholder: View {
                                     Circle()
                                         .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
                                 )
+                                .onAppear {
+                                    print("✅ 이자카야 이미지 로드 시도")
+                                }
                         } else {
-                            // 이미지를 찾을 수 없는 경우
-                            VStack {
-                                Text("!")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.red)
-                                Text("이미지 없음")
-                                    .font(.system(size: 8))
-                                    .foregroundColor(.red)
-                            }
-                            .onAppear {
-                                print("⚠️ 이미지를 찾을 수 없음: \(label)")
-                            }
+                            // 다른 이미지 로드 시도
+                            let image = Image(label)
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 60, height: 60)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 2)
+                                )
                         }
+                        
                     } else {
                         // 기본 텍스트 표시
                         Text("+")
