@@ -13,6 +13,7 @@ struct SearchView: View {
     @State private var searchRadius: Double = 1000 // 기본 반경 1000m
     @State private var showLocationPermissionAlert = false
     @State private var selectedTheme: String? = nil // 선택된 테마
+    @State private var showDetailView = false // 식당 상세 페이지로 이동하는 상태 변수
     
     var body: some View {
         NavigationStack {
@@ -186,6 +187,11 @@ struct SearchView: View {
             .navigationDestination(isPresented: $navigateToResults) {
                 ResultsView(restaurants: viewModel.restaurants, searchRadius: searchRadius, theme: selectedTheme)
                     .environmentObject(locationService)
+            }
+            .navigationDestination(isPresented: $viewModel.showDetailView) {
+                if let restaurant = viewModel.selectedRestaurant {
+                    RestaurantDetailView(restaurant: restaurant)
+                }
             }
             .onAppear {
                 // 화면 표시 시 위치 권한을 다시 한번 요청
@@ -416,6 +422,12 @@ struct MapSection: View {
                     viewModel.isLoading = false
                     
                     print("🔍 지도에서 식당 \(restaurants.count)개 검색됨")
+                },
+                onRestaurantSelected: { restaurant in
+                    // 상세 페이지로 이동
+                    viewModel.selectedRestaurant = restaurant
+                    viewModel.showDetailView = true
+                    print("🔍 지도에서 선택한 식당: \(restaurant.name)")
                 }
             )
             .frame(height: 250)

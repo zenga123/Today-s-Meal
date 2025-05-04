@@ -69,6 +69,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 선택된 테마
     var selectedTheme: String?
     
+    // 식당 상세 페이지로 이동하기 위한 콜백
+    var onRestaurantSelected: ((HotPepperRestaurant) -> Void)?
+    
     override func loadView() {
         // Google Maps API 키 설정 (코드로 직접 설정)
         GMSServices.provideAPIKey("AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8")
@@ -816,6 +819,9 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 마커 아이콘 커스터마이징 (음식점 아이콘 사용)
         marker.icon = GMSMarker.markerImage(with: .orange)
         
+        // 식당 ID를 마커의 userData에 저장
+        marker.userData = restaurant.id
+        
         // 지도에 마커 표시
         marker.map = mapView
         
@@ -832,7 +838,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 마커 인포윈도우 커스터마이징
     func mapView(_ mapView: GMSMapView, markerInfoWindow marker: GMSMarker) -> UIView? {
         // 커스텀 인포윈도우 생성
-        let infoWindow = UIView(frame: CGRect(x: 0, y: 0, width: 250, height: 80))
+        let infoWindow = UIView(frame: CGRect(x: 0, y: 0, width: 250, height: 100)) // 높이 증가
         infoWindow.backgroundColor = UIColor.white
         infoWindow.layer.cornerRadius = 10
         infoWindow.layer.shadowColor = UIColor.black.cgColor
@@ -852,11 +858,86 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         snippetLabel.textColor = UIColor.darkGray
         snippetLabel.text = marker.snippet ?? "정보 없음"
         
-        // 레이블 추가
+        // 상세 버튼 추가 - 하단에 "상세 보기" 버튼 표시
+        let detailsButton = UIButton(frame: CGRect(x: 15, y: 70, width: 220, height: 25))
+        detailsButton.setTitle("상세 보기 ›", for: .normal)
+        detailsButton.setTitleColor(UIColor.systemBlue, for: .normal)
+        detailsButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        detailsButton.contentHorizontalAlignment = .right
+        
+        // 레이블과 버튼 추가
         infoWindow.addSubview(titleLabel)
         infoWindow.addSubview(snippetLabel)
+        infoWindow.addSubview(detailsButton)
+        
+        // 인포윈도우에 탭 제스처 추가
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(infoWindowTapped(_:)))
+        infoWindow.addGestureRecognizer(tapGesture)
+        infoWindow.isUserInteractionEnabled = true
+        
+        // 마커의 userData에서 restaurantId 가져오기
+        if let restaurantId = marker.userData as? String {
+            // 태그에 식당 ID 저장 (나중에 식별하기 위해)
+            infoWindow.tag = restaurantId.hashValue
+            
+            // 사용자 정의 태그 데이터 추가
+            objc_setAssociatedObject(infoWindow, &AssociatedKeys.restaurantId, restaurantId, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
         
         return infoWindow
+    }
+    
+    // AssociatedKeys 구조체 (연관 객체 키로 사용)
+    private struct AssociatedKeys {
+        static var restaurantId = "restaurantId"
+    }
+    
+    // 인포윈도우 탭 이벤트 처리
+    @objc func infoWindowTapped(_ sender: UITapGestureRecognizer) {
+        guard let infoWindow = sender.view else { return }
+        
+        // 연관 객체에서 식당 ID 가져오기
+        guard let restaurantId = objc_getAssociatedObject(infoWindow, &AssociatedKeys.restaurantId) as? String else { return }
+        
+        // 식당 ID로 식당 정보 찾기
+        if let restaurant = restaurants.first(where: { $0.id == restaurantId }) {
+            print("🔍 인포윈도우 탭: 식당 \(restaurant.name) 선택됨")
+            
+            // 콜백 호출하여 상세 페이지로 이동
+            onRestaurantSelected?(restaurant)
+        }
+    }
+    
+    // 인포윈도우 탭 델리게이트 메서드 - 이 방법이 더 안정적
+    func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) {
+        print("🔍 인포윈도우 탭 델리게이트: 마커 탭됨")
+        
+        // 마커의 userData에서 restaurantId 가져오기
+        if let restaurantId = marker.userData as? String {
+            print("🔍 마커에서 식당 ID 찾음: \(restaurantId)")
+            
+            // 식당 ID로 식당 정보 찾기
+            if let restaurant = restaurants.first(where: { $0.id == restaurantId }) {
+                print("🔍 인포윈도우 탭 델리게이트: 식당 \(restaurant.name) 선택됨")
+                print("🔍 콜백 함수 존재 여부: \(onRestaurantSelected != nil ? "있음" : "없음")")
+                
+                // 콜백 호출하여 상세 페이지로 이동
+                DispatchQueue.main.async {
+                    self.onRestaurantSelected?(restaurant)
+                    print("🔍 식당 선택 콜백 호출 완료: \(restaurant.name)")
+                }
+            } else {
+                print("⚠️ 식당 ID \(restaurantId)에 해당하는 식당을 찾을 수 없음")
+                print("⚠️ 현재 저장된 식당 수: \(self.restaurants.count)")
+            }
+        } else {
+            print("⚠️ 마커의 userData에서 식당 ID를 찾을 수 없음")
+            if let userData = marker.userData {
+                print("⚠️ userData 타입: \(type(of: userData))")
+            } else {
+                print("⚠️ userData가 nil임")
+            }
+        }
     }
     
     // 식당 검색 실행
@@ -996,6 +1077,9 @@ struct NativeMapView: UIViewControllerRepresentable {
     // 검색 결과 콜백 (옵션)
     var onSearchResults: (([HotPepperRestaurant]) -> Void)?
     
+    // 식당 선택 콜백 추가
+    var onRestaurantSelected: ((HotPepperRestaurant) -> Void)?
+    
     // UIViewController 생성
     func makeUIViewController(context: Context) -> MapViewController {
         let viewController = MapViewController()
@@ -1020,6 +1104,13 @@ struct NativeMapView: UIViewControllerRepresentable {
         viewController.searchResultsCallback = { restaurants in
             DispatchQueue.main.async {
                 onSearchResults?(restaurants)
+            }
+        }
+        
+        // 식당 선택 콜백 설정
+        viewController.onRestaurantSelected = { restaurant in
+            DispatchQueue.main.async {
+                onRestaurantSelected?(restaurant)
             }
         }
         
