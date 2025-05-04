@@ -36,7 +36,7 @@ class RestaurantViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func searchRestaurants(lat: Double, lng: Double) {
+    func searchRestaurants(lat: Double, lng: Double, selectedTheme: String? = nil) {
         isLoading = true
         errorMessage = nil
         
@@ -45,6 +45,67 @@ class RestaurantViewModel: ObservableObject {
         
         print("🔍 API 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
         
+        // 테마가 선택된 경우, 테마별 검색 사용
+        if let theme = selectedTheme {
+            print("🔍 테마 검색 사용: \(theme)")
+            
+            // 선택된 테마로 검색 시작
+            RestaurantAPI.shared.searchRestaurantsByTheme(
+                theme: theme,
+                lat: lat,
+                lng: lng,
+                range: rangeValue // 사용자가 선택한 반경 사용
+            ) { [weak self] restaurants in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.isLoading = false
+                    print("📡 테마 API 응답 수신: \(restaurants.count)개 항목")
+                    
+                    if restaurants.isEmpty {
+                        print("⚠️ 테마 검색 결과가 없습니다.")
+                        self.restaurants = []
+                        return
+                    }
+                    
+                    // 사용자 위치 정보와 각 음식점까지의 거리 계산
+                    var updatedRestaurants = restaurants
+                    
+                    if let userLocation = self.currentLocation {
+                        updatedRestaurants = updatedRestaurants.map { restaurant in
+                            var updatedRestaurant = restaurant
+                            
+                            // 음식점 위치 설정
+                            let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
+                            
+                            // 거리 계산 (미터 단위)
+                            let distanceInMeters = Int(userLocation.distance(from: restaurantLocation))
+                            updatedRestaurant.distance = distanceInMeters
+                            updatedRestaurant.userLocation = userLocation
+                            
+                            return updatedRestaurant
+                        }
+                        
+                        // 거리순으로 정렬
+                        updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
+                    }
+                    
+                    print("✅ 테마 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
+                    self.restaurants = updatedRestaurants
+                }
+            }
+            return
+        }
+        
+        // 테마가 선택되지 않은 경우, 빈 결과 반환
+        if selectedTheme == nil {
+            print("⚠️ 테마가 선택되지 않아 결과 없음")
+            self.isLoading = false
+            self.restaurants = []
+            return
+        }
+        
+        // 테마가 없을 때 기존 검색 사용 (필요한 경우)
         RestaurantAPI.shared.searchRestaurants(lat: lat, lng: lng, range: rangeValue)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in

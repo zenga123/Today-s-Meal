@@ -27,6 +27,27 @@ class RestaurantAPI {
     private let apiKey = "de225a444baab66f"
     private let baseURL = "https://webservice.recruit.co.jp/hotpepper/gourmet/v1"
     
+    // 테마와 장르 코드 매핑 테이블
+    private let themeToGenreCode: [String: String] = [
+        "izakaya": "G001",                // 居酒屋
+        "ダイニングバー・バル": "G002",        // ダイニングバー・バル
+        "創作料理": "G003",                 // 創作料理
+        "和食": "G004",                    // 和食
+        "洋食": "G005",                    // 洋食
+        "イタリアン・フレンチ": "G006",        // イタリアン・フレンチ
+        "中華": "G007",                    // 中華
+        "焼肉・ホルモン": "G008",           // 焼肉・ホルモン
+        "韓国料理": "G017",                // 韓国料理
+        "アジア・エスニック料理": "G009",     // アジア・エスニック料理
+        "各国料理": "G010",                // 各国料理
+        "カラオケ・パーティ": "G011",        // カラオケ・パーティ
+        "バー・カクテル": "G012",           // バー・カクテル
+        "ラーメン": "G013",                // ラーメン
+        "お好み焼き・もんじゃ": "G016",      // お好み焼き・もんじゃ
+        "カフェ・スイーツ": "G014",         // カフェ・スイーツ
+        "その他グルメ": "G015"             // その他グルメ
+    ]
+    
     private init() {}
     
     // 실제 일본 지역에서만 동작하는 핫페퍼 API
@@ -223,6 +244,8 @@ class RestaurantAPI {
             }
             .map { response -> [HotPepperRestaurant] in
                 print("📡 API 응답 정보: 총 \(response.results.resultsAvailable)개, 반환된 결과 \(response.results.resultsReturned)")
+                print("📍 API 응답: \(response.results.shop.count)개 음식점 데이터 수신 (검색 반경: \(actualRangeMeters)m)")
+                print("🔍 필터링 결과: \(response.results.shop.count)개 중 \(response.results.shop.count)개 남음 (범위: \(actualRangeMeters)m)")
                 return response.results.shop
             }
             .eraseToAnyPublisher()
@@ -398,5 +421,110 @@ class RestaurantAPI {
             pet: "불가",
             child: "환영"
         )
+    }
+    
+    // 테마별 음식점 검색 (페이지네이션 지원)
+    func searchRestaurantsByTheme(
+        theme: String,
+        lat: Double,
+        lng: Double,
+        range: Int,
+        completion: @escaping ([HotPepperRestaurant]) -> Void
+    ) {
+        let actualRangeMeters = getMetersFromRange(range)
+        print("🔍 테마별 음식점 검색 시작: 테마 \(theme), 위도 \(lat), 경도 \(lng), 범위값 \(range) (약 \(actualRangeMeters)m)")
+        
+        // 모든 페이지의 결과를 담을 배열
+        var allRestaurants: [HotPepperRestaurant] = []
+        
+        // 재귀적으로 모든 페이지 로드
+        func loadPage(start: Int) {
+            var components = URLComponents(string: baseURL)
+            
+            // 기본 쿼리 파라미터 설정
+            components?.queryItems = [
+                URLQueryItem(name: "key", value: apiKey),
+                URLQueryItem(name: "lat", value: String(lat)),
+                URLQueryItem(name: "lng", value: String(lng)),
+                URLQueryItem(name: "range", value: String(range)),
+                URLQueryItem(name: "start", value: String(start)),
+                URLQueryItem(name: "count", value: "100"), // 최대 100개씩 요청
+                URLQueryItem(name: "format", value: "json")
+            ]
+            
+            // 테마를 장르 코드로 변환하여 사용
+            if let genreCode = themeToGenreCode[theme] {
+                components?.queryItems?.append(URLQueryItem(name: "genre", value: genreCode))
+                print("🔍 장르 코드로 검색: \(theme) -> \(genreCode)")
+            } else {
+                // 매핑된 장르 코드가 없으면 키워드로 검색
+                components?.queryItems?.append(URLQueryItem(name: "keyword", value: theme))
+                print("⚠️ 장르 코드 미매핑: 키워드로 검색 '\(theme)'")
+            }
+            
+            guard let url = components?.url else {
+                print("❌ API 오류: 잘못된 URL 생성")
+                completion([])
+                return
+            }
+            
+            print("📡 테마 API 요청 URL: \(url.absoluteString)")
+            
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    print("❌ API 네트워크 오류: \(error.localizedDescription)")
+                    completion(allRestaurants) // 에러 발생해도 지금까지 로드된 결과 반환
+                    return
+                }
+                
+                guard let data = data else {
+                    print("❌ API 응답 데이터 없음")
+                    completion(allRestaurants)
+                    return
+                }
+                
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("📡 테마 API 응답 상태 코드: \(httpResponse.statusCode)")
+                }
+                
+                // 디버깅용 데이터 출력
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    let previewLength = min(500, jsonString.count)
+                    let preview = String(jsonString.prefix(previewLength))
+                    print("📡 테마 API 응답 미리보기: \(preview)\(jsonString.count > previewLength ? "..." : "")")
+                }
+                
+                do {
+                    let decoder = JSONDecoder()
+                    let response = try decoder.decode(HotPepperResponse.self, from: data)
+                    
+                    // 현재 페이지 결과 추가
+                    allRestaurants.append(contentsOf: response.results.shop)
+                    
+                    // 로그 출력
+                    print("📡 테마 API 응답 정보: 총 \(response.results.resultsAvailable)개, 반환된 결과 \(response.results.resultsReturned), 현재까지 로드: \(allRestaurants.count)개")
+                    
+                    // 더 많은 결과가 있고, 현재 페이지가 데이터를 반환했으면 다음 페이지 로드
+                    let resultsReturned = Int(response.results.resultsReturned) ?? 0
+                    let resultsAvailable = response.results.resultsAvailable
+                    let nextStart = start + resultsReturned
+                    
+                    if resultsReturned > 0 && nextStart <= resultsAvailable && allRestaurants.count < resultsAvailable {
+                        print("📄 다음 페이지 로드 중: \(nextStart)/\(resultsAvailable)")
+                        loadPage(start: nextStart)
+                    } else {
+                        // 모든 페이지 로드 완료
+                        print("✅ 테마 \(theme) 검색 완료: 총 \(allRestaurants.count)개 음식점 찾음 (총 가능: \(resultsAvailable)개)")
+                        completion(allRestaurants)
+                    }
+                } catch {
+                    print("❌ 테마 API 디코딩 오류: \(error)")
+                    completion(allRestaurants) // 에러 발생해도 지금까지 로드된 결과 반환
+                }
+            }.resume()
+        }
+        
+        // 첫 페이지부터 로드 시작
+        loadPage(start: 1)
     }
 } 

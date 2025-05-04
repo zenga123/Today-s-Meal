@@ -110,7 +110,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             
             // 위치가 있으면 자동으로 검색 실행
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.searchRestaurants()
+                self.searchRestaurants(theme: self.selectedTheme)
             }
         }
         
@@ -266,7 +266,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             
             // 위치가 변경되면 자동으로 검색 실행
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                self.searchRestaurants()
+                self.searchRestaurants(theme: self.selectedTheme)
             }
         }
     }
@@ -768,6 +768,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 기존 마커 모두 제거
         clearAllRestaurantMarkers()
         
+        // 테마가 선택되지 않았으면 마커를 추가하지 않음
+        if selectedTheme == nil {
+            print("🔍 선택된 테마가 없어 지도에 표시할 마커 없음")
+            return
+        }
+        
         // 새 마커 추가
         for restaurant in restaurants {
             addRestaurantMarker(restaurant)
@@ -814,9 +820,21 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     }
     
     // 식당 검색 실행
-    func searchRestaurants() {
+    func searchRestaurants(theme: String? = nil) {
         guard let location = currentLocation else {
             print("⚠️ 현재 위치 정보 없어 검색 실패")
+            return
+        }
+        
+        // 테마 파라미터가 제공되면 그 값을 사용, 아니면 클래스 속성 사용
+        let themeToUse = theme ?? selectedTheme
+        
+        // 테마가 선택되지 않은 경우, 기존 마커만 제거하고 API 호출하지 않음
+        if themeToUse == nil {
+            print("🔍 선택된 테마가 없어 검색하지 않고 기존 마커만 제거")
+            clearAllRestaurantMarkers()
+            // 빈 배열로 결과 콜백 호출하여 UI 업데이트
+            searchResultsCallback?([])
             return
         }
         
@@ -828,32 +846,27 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         print("🔍 지도에서 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
         print("🔍 검색 좌표: 위도 \(location.coordinate.latitude), 경도 \(location.coordinate.longitude)")
-        if let theme = selectedTheme {
-            print("🔍 선택된 테마: \(theme)")
-        }
+        print("🔍 선택된 테마: \(themeToUse ?? "")")
         
-        // API 호출
-        RestaurantAPI.shared.searchRestaurants(
+        // 테마 검색 API 사용
+        RestaurantAPI.shared.searchRestaurantsByTheme(
+            theme: themeToUse!,
             lat: location.coordinate.latitude,
             lng: location.coordinate.longitude,
-            range: rangeValue
-        )
-        .receive(on: DispatchQueue.main)
-        .sink(
-            receiveCompletion: { completion in
-                if case .failure(let error) = completion {
-                    print("❌ 검색 오류: \(error.description)")
-                }
-            },
-            receiveValue: { [weak self] restaurants in
-                guard let self = self else { return }
+            range: rangeValue // 사용자가 선택한 반경 사용
+        ) { [weak self] restaurants in
+            guard let self = self else { return }
+            
+            // 메인 스레드에서 UI 업데이트
+            DispatchQueue.main.async {
+                print("📍 테마 API 응답: \(restaurants.count)개 음식점 데이터 수신")
                 
-                print("📍 API 응답: \(restaurants.count)개 음식점 데이터 수신")
-                
+                // 결과 없음 처리
                 if restaurants.isEmpty {
-                    print("⚠️ 검색 결과가 없습니다. 현재 위치 주변에 등록된 음식점이 없거나 API 제한이 있을 수 있습니다.")
-                } else {
-                    print("✅ 첫 번째 음식점: \(restaurants.first?.name ?? "없음"), 위치: \(restaurants.first?.lat ?? 0), \(restaurants.first?.lng ?? 0)")
+                    print("⚠️ 검색 결과가 없습니다.")
+                    self.restaurants = []
+                    self.searchResultsCallback?([])
+                    return
                 }
                 
                 // 거리 계산 및 정렬
@@ -877,59 +890,15 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                     updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
                 }
                 
-                // 선택된 테마가 있으면 해당 테마로 필터링
-                if let selectedTheme = self.selectedTheme {
-                    // 테마와 관련된 API 검색 키워드 매핑
-                    let themeToAPIKeyword: [String: String] = [
-                        "izakaya": "居酒屋",
-                        "ダイニングバー・バル": "ダイニングバー",
-                        "創作料理": "創作料理",
-                        "和食": "和食",
-                        "洋食": "洋食",
-                        "イタリアン・フレンチ": "イタリアン",
-                        "中華": "中華",
-                        "焼肉・ホルモン": "焼肉",
-                        "韓国料理": "韓国料理",
-                        "アジア・エスニック料理": "アジア・エスニック",
-                        "各国料理": "各国料理",
-                        "カラオケ・パーティ": "カラオケ",
-                        "バー・カクテル": "バー",
-                        "ラーメン": "ラーメン",
-                        "お好み焼き・もんじゃ": "お好み焼き",
-                        "カフェ・スイーツ": "カフェ",
-                        "その他グルメ": "その他"
-                    ]
-                    
-                    let keyword = themeToAPIKeyword[selectedTheme] ?? selectedTheme
-                    
-                    print("🔍 테마 필터링: \(selectedTheme) (키워드: \(keyword))")
-                    
-                    // 테마에 맞는 식당 필터링
-                    updatedRestaurants = updatedRestaurants.filter { restaurant in
-                        // 카테고리 기반 필터링
-                        let categoryMatches = restaurant.genre?.name?.contains(keyword) ?? false || 
-                                             (selectedTheme == "izakaya" && (restaurant.genre?.name?.contains("居酒屋") ?? false))
-                        
-                        // 이름 기반 필터링
-                        let nameMatches = restaurant.name.contains(keyword) ||
-                                         (selectedTheme == "izakaya" && restaurant.name.contains("居酒屋"))
-                        
-                        return categoryMatches || nameMatches
-                    }
-                    
-                    print("📊 테마 필터링 결과: \(updatedRestaurants.count)개 식당 남음")
-                }
+                print("✅ 테마 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
                 
                 // 검색 결과 업데이트 (didSet 트리거하여 마커 표시)
                 self.restaurants = updatedRestaurants
                 
                 // 검색 결과 콜백 호출
                 self.searchResultsCallback?(updatedRestaurants)
-                
-                print("✅ 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
             }
-        )
-        .store(in: &cancellables)
+        }
     }
     
     // 취소 가능한 구독 저장
@@ -1002,7 +971,7 @@ struct NativeMapView: UIViewControllerRepresentable {
                 
                 // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
                 if autoSearch {
-                    viewController.searchRestaurants()
+                    viewController.searchRestaurants(theme: selectedTheme)
                 }
             }
         }
@@ -1031,7 +1000,7 @@ struct NativeMapView: UIViewControllerRepresentable {
                 if autoSearch {
                     // 약간의 지연을 줘서 지도가 업데이트된 후 검색하도록 함
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        uiViewController.searchRestaurants()
+                        uiViewController.searchRestaurants(theme: selectedTheme)
                     }
                 }
             }
@@ -1043,9 +1012,9 @@ struct NativeMapView: UIViewControllerRepresentable {
             print("⚡️ NativeMapView: 테마 변경 감지 \(uiViewController.selectedTheme ?? "없음") -> \(selectedTheme ?? "없음")")
             uiViewController.selectedTheme = selectedTheme
             
-            // 자동 검색이 활성화된 경우 테마 변경 시 자동으로 검색 실행
-            if autoSearch {
-                uiViewController.searchRestaurants()
+            // 테마가 nil로 변경된 경우에도 업데이트 실행 (selectedTheme을 전달)
+            if autoSearch || selectedTheme == nil {
+                uiViewController.searchRestaurants(theme: selectedTheme)
             }
         }
         
@@ -1056,7 +1025,7 @@ struct NativeMapView: UIViewControllerRepresentable {
             
             // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
             if autoSearch {
-                uiViewController.searchRestaurants()
+                uiViewController.searchRestaurants(theme: selectedTheme)
             }
         }
         

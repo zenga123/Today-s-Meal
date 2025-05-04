@@ -164,24 +164,72 @@ class RestaurantListViewModel: ObservableObject {
         "その他グルメ": "その他"
     ]
     
+    // 테마가 선택되지 않았을 때 식당 목록을 비우는 메서드
+    func clearRestaurants() {
+        restaurants = []
+        isLoading = false
+        hasMorePages = false
+        errorMessage = nil
+        print("🧹 테마 선택 해제로 인한 식당 목록 초기화")
+    }
+    
     func searchRestaurants(theme: String, latitude: Double, longitude: Double, radius: Double) {
-        // 이전 데이터 초기화하지 않고, 새 검색 시작을 알리는 플래그만 설정
-        currentPage = 1
-        hasMorePages = true
+        // 상태 초기화 및 설정
+        isLoading = true
         currentTheme = theme
         currentLat = latitude
         currentLng = longitude
         currentRadius = radius
-        isLoadingPage = false
-        errorMessage = nil
-        
-        // 새 검색을 시작할 때만 restaurants 배열 초기화
-        restaurants = []
         
         print("🔍 검색 시작: 테마 \(theme), 반경 \(radius)m")
         
-        // 첫 페이지 로딩
-        loadPage(page: 1)
+        // 기존 데이터 초기화
+        restaurants = []
+        
+        // API range 값 변환
+        let apiRangeValue = getAPIRangeValue(forMeters: radius)
+        
+        // 새로운 테마별 검색 API 사용
+        RestaurantAPI.shared.searchRestaurantsByTheme(
+            theme: theme,
+            lat: latitude,
+            lng: longitude,
+            range: apiRangeValue
+        ) { [weak self] hotPepperRestaurants in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                print("📡 테마 API 응답 수신: \(hotPepperRestaurants.count)개 항목")
+                
+                // 결과가 있으면 변환 및 표시
+                if !hotPepperRestaurants.isEmpty {
+                    // HotPepperRestaurant을 Restaurant 모델로 변환
+                    let newRestaurants = self.convertToRestaurants(
+                        hotPepperRestaurants: hotPepperRestaurants,
+                        theme: self.currentTheme
+                    )
+                    
+                    // 거리에 따라 정렬
+                    let sortedRestaurants = self.sortRestaurantsByDistance(
+                        restaurants: newRestaurants,
+                        latitude: self.currentLat,
+                        longitude: self.currentLng
+                    )
+                    
+                    print("✅ 테마 검색 완료: \(sortedRestaurants.count)개 음식점 찾음")
+                    
+                    // 결과 업데이트
+                    self.restaurants = sortedRestaurants
+                } else {
+                    print("⚠️ 검색 결과가 없습니다.")
+                    self.restaurants = []
+                }
+                
+                // 로딩 상태 업데이트
+                self.isLoading = false
+                self.hasMorePages = false // 페이지네이션을 API에서 직접 처리하므로 더 로드할 필요 없음
+            }
+        }
     }
     
     func loadMoreIfNeeded() {
@@ -365,6 +413,21 @@ class RestaurantListViewModel: ObservableObject {
         case ...1000: return 3
         case ...2000: return 4
         default: return 5
+        }
+    }
+    
+    // 거리에 따라 식당 정렬
+    private func sortRestaurantsByDistance(restaurants: [Today_s_Meal.Restaurant], latitude: Double, longitude: Double) -> [Today_s_Meal.Restaurant] {
+        let currentLocation = CLLocation(latitude: latitude, longitude: longitude)
+        
+        return restaurants.sorted { restaurant1, restaurant2 in
+            let location1 = CLLocation(latitude: restaurant1.latitude, longitude: restaurant1.longitude)
+            let location2 = CLLocation(latitude: restaurant2.latitude, longitude: restaurant2.longitude)
+            
+            let distance1 = currentLocation.distance(from: location1)
+            let distance2 = currentLocation.distance(from: location2)
+            
+            return distance1 < distance2
         }
     }
 }

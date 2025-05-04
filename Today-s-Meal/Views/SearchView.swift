@@ -226,7 +226,8 @@ struct SearchView: View {
                 if let location = locationService.currentLocation {
                     viewModel.searchRestaurants(
                         lat: location.coordinate.latitude,
-                        lng: location.coordinate.longitude
+                        lng: location.coordinate.longitude,
+                        selectedTheme: selectedTheme
                     )
                     
                     // 테마가 선택되어 있으면 테마별 음식점도 검색
@@ -263,20 +264,24 @@ struct SearchView: View {
                         radius: searchRadius
                     )
                     
-                    // 지도가 새 테마를 반영하도록 약간의 지연 후 검색 실행
-                    // 지도는 이미 selectedTheme의 변경을 감지하지만, 확실히 하기 위해 여기서도 실행
+                    // 지도에 테마를 전달하여 검색 실행
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         viewModel.searchRestaurants(
                             lat: location.coordinate.latitude,
-                            lng: location.coordinate.longitude
+                            lng: location.coordinate.longitude,
+                            selectedTheme: theme
                         )
                     }
                 } else if newTheme == nil, let location = locationService.currentLocation {
-                    // 테마 선택이 해제되면 모든 음식점 표시
+                    // 테마 선택이 해제되면 빈 배열로 설정 (마커 표시 안 함)
+                    themeViewModel.clearRestaurants()
+                    
+                    // 지도에도 반영되도록 검색 실행 (테마가 nil이므로 마커가 표시되지 않음)
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         viewModel.searchRestaurants(
                             lat: location.coordinate.latitude,
-                            lng: location.coordinate.longitude
+                            lng: location.coordinate.longitude,
+                            selectedTheme: nil
                         )
                     }
                 }
