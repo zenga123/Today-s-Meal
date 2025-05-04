@@ -51,16 +51,16 @@ struct SearchView: View {
                     if let theme = selectedTheme {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
-                                Text("\(theme == "izakaya" ? "居酒屋" : theme) 음식점")
+                                Text("\(theme == "izakaya" ? "居酒屋" : theme) お店")
                                     .font(.headline)
-                            .foregroundColor(.white)
+                                .foregroundColor(.white)
                                 
                                 Spacer()
                                 
-                                Text("\(searchRadius/1000, specifier: "%.1f")km 이내")
+                                Text("\(searchRadius/1000, specifier: "%.1f")km 以内")
                                     .font(.subheadline)
                                     .foregroundColor(.gray)
-                        }
+                            }
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                         
@@ -71,7 +71,7 @@ struct SearchView: View {
                                     VStack(spacing: 12) {
                                         ProgressView()
                                             .tint(.white)
-                                        Text("실제 음식점 검색 중...")
+                                        Text("実際のお店を検索中...")
                                             .font(.caption)
                                             .foregroundColor(.gray)
                                     }
@@ -84,11 +84,11 @@ struct SearchView: View {
                                         .font(.system(size: 40))
                                         .foregroundColor(.gray)
                                     
-                                    Text("검색 결과가 없습니다")
+                                    Text("検索結果がありません")
                                         .font(.headline)
                                         .foregroundColor(.gray)
                                     
-                                    Text("다른 테마나 검색 반경을 변경해보세요")
+                                    Text("他のテーマや検索範囲を変更してみてください")
                                         .font(.caption)
                                         .foregroundColor(.gray.opacity(0.8))
                             }
@@ -102,7 +102,7 @@ struct SearchView: View {
                                         if themeViewModel.isLoading {
                                             HStack {
                                                 Spacer()
-                                                Text("더 많은 음식점 검색 중...")
+                                                Text("もっと多くのお店を検索中...")
                                                     .font(.caption)
                                                     .foregroundColor(.gray.opacity(0.7))
                                                 Spacer()
@@ -158,7 +158,7 @@ struct SearchView: View {
                                         if !themeViewModel.isLoading && !themeViewModel.hasMorePages && !themeViewModel.restaurants.isEmpty {
                                             HStack {
                                                 Spacer()
-                                                Text("모든 결과를 불러왔습니다")
+                                                Text("すべての結果を読み込みました")
                             .font(.caption)
                                                     .foregroundColor(.gray.opacity(0.7))
                                                     .padding(.vertical, 16)
@@ -292,15 +292,15 @@ struct SearchView: View {
                     }
                 }
             }
-            .alert("위치 권한 필요", isPresented: $showLocationPermissionAlert) {
-                Button("설정으로 이동") {
+            .alert("位置情報の権限が必要", isPresented: $showLocationPermissionAlert) {
+                Button("設定で位置情報の権限を有効にする") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
                     }
                 }
-                Button("취소", role: .cancel) {}
+                Button("キャンセル", role: .cancel) {}
             } message: {
-                Text("주변 맛집을 찾기 위해서는 위치 정보 접근 권한이 필요합니다. 설정에서 권한을 허용해 주세요.")
+                Text("周辺のお店を探すには、位置情報へのアクセス権限が必要です。設定で権限を許可してください。")
             }
         }
     }
@@ -331,22 +331,22 @@ struct SearchView: View {
         switch locationService.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             if locationService.currentLocation != nil {
-                return "위치 확인됨"
+                return "位置確認済み"
             } else {
-                return "확인 중"
+                return "確認中"
             }
         case .denied, .restricted:
-            return "권한 필요"
+            return "権限が必要"
         case .notDetermined:
-            return "권한 필요"
+            return "権限が必要"
         @unknown default:
-            return "오류"
+            return "エラー"
         }
     }
     
     private func searchRestaurants() {
         guard let location = locationService.currentLocation else {
-            viewModel.errorMessage = "위치를 확인할 수 없습니다. 다시 시도해주세요."
+            viewModel.errorMessage = "位置を確認できません。もう一度お試しください。"
             return
         }
         
@@ -376,7 +376,7 @@ struct HeaderSection: View {
                 .frame(width: 60, height: 60)
                 .foregroundColor(.orange)
             
-            Text("오늘의 식사")
+            Text("今日の食事")
                 .font(.title)
                 .fontWeight(.bold)
             
@@ -461,7 +461,7 @@ struct LocationPermissionSection: View {
             }) {
                 HStack {
                     Image(systemName: "location.circle.fill")
-                    Text("위치 권한 요청하기")
+                    Text("位置情報の権限をリクエスト")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -480,7 +480,7 @@ struct LocationPermissionSection: View {
             }) {
                 HStack {
                     Image(systemName: "gear")
-                    Text("설정에서 위치 권한 활성화")
+                    Text("設定で位置情報の権限を有効にする")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -500,10 +500,10 @@ struct SearchRadiusSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("검색 반경")
+            Text("検索範囲")
                 .font(.headline)
             
-            Picker("검색 반경", selection: $selectedRangeIndex) {
+            Picker("検索範囲", selection: $selectedRangeIndex) {
                 ForEach(0..<viewModel.rangeOptions.count, id: \.self) { index in
                     Text(viewModel.rangeOptions[index].label)
                 }

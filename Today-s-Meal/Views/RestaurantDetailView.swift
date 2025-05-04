@@ -75,7 +75,7 @@ struct RestaurantDetailView: View {
                 .scaleEffect(1.5)
                 .tint(.white)
             
-            Text("상세 정보를 불러오는 중...")
+            Text("詳細情報を読み込み中...")
                 .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -116,7 +116,7 @@ struct RestaurantDetailView: View {
             HStack {
                 Image(systemName: "arrow.left")
                     .foregroundColor(.white)
-                Text("뒤로")
+                Text("戻る")
                     .foregroundColor(.white)
             }
         }
@@ -183,7 +183,7 @@ struct RestaurantDetailView: View {
     // 영업시간 및 주소 섹션
     private var businessInfoSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("영업 정보")
+            Text("営業情報")
                 .font(.headline)
                 .foregroundColor(.white)
             
@@ -194,7 +194,7 @@ struct RestaurantDetailView: View {
                     .frame(width: 24)
                 
                 VStack(alignment: .leading) {
-                    Text("영업시간")
+                    Text("営業時間")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
@@ -202,7 +202,7 @@ struct RestaurantDetailView: View {
                         Text("\(open) - \(close)")
                             .foregroundColor(.white)
                     } else {
-                        Text("정보 없음")
+                        Text("情報なし")
                             .foregroundColor(.gray)
                     }
                 }
@@ -215,7 +215,7 @@ struct RestaurantDetailView: View {
                     .frame(width: 24)
                 
                 VStack(alignment: .leading) {
-                    Text("주소")
+                    Text("住所")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
@@ -223,7 +223,7 @@ struct RestaurantDetailView: View {
                         Text(address)
                             .foregroundColor(.white)
                     } else {
-                        Text("정보 없음")
+                        Text("情報なし")
                             .foregroundColor(.gray)
                     }
                 }
@@ -236,7 +236,7 @@ struct RestaurantDetailView: View {
                     .frame(width: 24)
                 
                 VStack(alignment: .leading) {
-                    Text("접근 방법")
+                    Text("アクセス方法")
                         .font(.subheadline)
                         .foregroundColor(.gray)
                     
@@ -244,7 +244,7 @@ struct RestaurantDetailView: View {
                         Text(access)
                             .foregroundColor(.white)
                     } else {
-                        Text("정보 없음")
+                        Text("情報なし")
                             .foregroundColor(.gray)
                     }
                 }
@@ -255,7 +255,7 @@ struct RestaurantDetailView: View {
     // 식당 특징 섹션
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("식당 특징")
+            Text("店舗の特徴")
                 .font(.headline)
                 .foregroundColor(.white)
             
@@ -264,19 +264,19 @@ struct RestaurantDetailView: View {
                 featureItem(icon: "wifi", title: "Wi-Fi", available: currentRestaurant.wifi == "あり" || currentRestaurant.wifi == "있음")
                 
                 // 주차
-                featureItem(icon: "car", title: "주차", available: currentRestaurant.parking == "あり" || currentRestaurant.parking == "있음")
+                featureItem(icon: "car", title: "駐車場", available: currentRestaurant.parking == "あり" || currentRestaurant.parking == "있음")
                 
                 // 카드 결제
-                featureItem(icon: "creditcard", title: "카드 결제", available: currentRestaurant.card == "利用可" || currentRestaurant.card == "가능")
+                featureItem(icon: "creditcard", title: "カード決済", available: currentRestaurant.card == "利用可" || currentRestaurant.card == "가능")
                 
                 // 금연
-                featureItem(icon: "nosign", title: "금연석", available: currentRestaurant.nonSmoking?.contains("禁煙") ?? false || currentRestaurant.nonSmoking?.contains("금연") ?? false)
+                featureItem(icon: "nosign", title: "禁煙席", available: currentRestaurant.nonSmoking?.contains("禁煙") ?? false || currentRestaurant.nonSmoking?.contains("금연") ?? false)
                 
                 // 개인룸
-                featureItem(icon: "door.right.hand.closed", title: "개인룸", available: currentRestaurant.privateRoom == "あり" || currentRestaurant.privateRoom == "있음")
+                featureItem(icon: "door.right.hand.closed", title: "個室", available: currentRestaurant.privateRoom == "あり" || currentRestaurant.privateRoom == "있음")
                 
                 // 영어 서비스
-                featureItem(icon: "person.wave.2", title: "영어 가능", available: currentRestaurant.english == "あり" || currentRestaurant.english == "가능")
+                featureItem(icon: "person.wave.2", title: "英語対応", available: currentRestaurant.english == "あり" || currentRestaurant.english == "가능")
             }
         }
     }
@@ -284,7 +284,7 @@ struct RestaurantDetailView: View {
     // 외부 링크 섹션
     private var linksSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("외부 링크")
+            Text("外部リンク")
                 .font(.headline)
                 .foregroundColor(.white)
             
@@ -292,7 +292,7 @@ struct RestaurantDetailView: View {
                 Link(destination: URL(string: pcUrl) ?? URL(string: "https://www.hotpepper.jp")!) {
                     HStack {
                         Image(systemName: "globe")
-                        Text("공식 웹사이트 방문하기")
+                        Text("公式サイトを訪問")
                         Spacer()
                         Image(systemName: "arrow.up.right.square")
                     }
@@ -307,7 +307,7 @@ struct RestaurantDetailView: View {
                 Link(destination: URL(string: mobileUrl) ?? URL(string: "https://www.hotpepper.jp")!) {
                     HStack {
                         Image(systemName: "iphone")
-                        Text("모바일 사이트 방문하기")
+                        Text("モバイルサイトを訪問")
                         Spacer()
                         Image(systemName: "arrow.up.right.square")
                     }
@@ -331,7 +331,7 @@ struct RestaurantDetailView: View {
             
             Spacer()
             
-            Text(available ? "있음" : "없음")
+            Text(available ? "あり" : "なし")
                 .foregroundColor(available ? .green : .gray)
         }
         .padding(.vertical, 8)

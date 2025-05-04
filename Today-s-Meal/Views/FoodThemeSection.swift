@@ -9,10 +9,10 @@ struct FoodThemeSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 제목 및 설명
-            Text("음식 테마")
+            Text("料理テーマ")
                 .font(.headline)
             
-            Text(selectedTheme == nil ? "원하는 음식 테마를 선택하세요" : "선택된 테마: \(selectedTheme == "izakaya" ? "居酒屋" : selectedTheme ?? "")")
+            Text(selectedTheme == nil ? "お好みの料理テーマを選んでください" : "選択したテーマ: \(selectedTheme == "izakaya" ? "居酒屋" : selectedTheme ?? "")")
                 .font(.caption)
                 .foregroundColor(selectedTheme == nil ? .gray : .orange)
                 .padding(.bottom, 8)

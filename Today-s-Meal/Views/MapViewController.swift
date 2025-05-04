@@ -209,13 +209,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         if searchRadius >= 1000 {
             // 정확히 3000m일 때는 3.0km로 표시
             if searchRadius == 3000 {
-                radiusText = "반경: 3.0 km"
+                radiusText = "範囲: 3.0 km"
             } else {
                 let kmRadius = searchRadius / 1000.0
-                radiusText = String(format: "반경: %.1f km", kmRadius)
+                radiusText = String(format: "範囲: %.1f km", kmRadius)
             }
         } else {
-            radiusText = String(format: "반경: %d m", Int(searchRadius))
+            radiusText = String(format: "範囲: %d m", Int(searchRadius))
         }
         
         // UI 업데이트는 메인 스레드에서
@@ -239,12 +239,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let seoulCityHall = CLLocationCoordinate2D(latitude: 37.5662, longitude: 126.9785)
         let marker = GMSMarker()
         marker.position = seoulCityHall
-        marker.title = "서울시청"
-        marker.snippet = "Seoul City Hall"
+        marker.title = "東京都庁"
+        marker.snippet = "Tokyo Metropolitan Government Building"
         marker.icon = GMSMarker.markerImage(with: .blue)
         marker.map = mapView
         
-        print("✅ 테스트 마커 추가됨")
+        print("✅ テストマーカーが追加されました")
     }
     
     // 위치 업데이트 메서드
@@ -254,10 +254,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         if let oldLocation = self.currentLocation {
             let distance = location.distance(from: oldLocation)
             locationChanged = distance > 10  // 10m 이상 차이가 있을 때만 위치 변경으로 간주
-            print("🔄 위치 변경: \(distance)m 이동")
+            print("🔄 位置が更新されました: \(distance)m 移動")
         } else {
             locationChanged = true
-            print("🔄 최초 위치 설정")
+            print("🔄 最初の位置が設定されました")
         }
         
         // 위치 업데이트
@@ -299,7 +299,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     // 현재 위치로 지도 이동
     private func moveToCurrentLocation() {
         guard let location = currentLocation else { 
-            print("❌ 현재 위치 정보 없음")
+            print("❌ 現在の位置情報がありません")
             return 
         }
         
@@ -308,71 +308,71 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             longitude: location.coordinate.longitude
         )
         
-        // 카메라 이동
+        // カメラを移動
         let camera = GMSCameraPosition.camera(withTarget: position, zoom: 15)
         mapView.animate(to: camera)
         
-        // 반경 원 업데이트
+        // 半径の円を更新
         updateRadiusCircle()
         
-        print("✅ 지도 위치 업데이트: \(position.latitude), \(position.longitude)")
+        print("✅ 地図の位置が更新されました: \(position.latitude), \(position.longitude)")
     }
     
-    // 스케일 바 설정
+    // 스케일바를 설정
     private func setupScaleBar() {
-        // 스케일 바 컨테이너 뷰
+        // 스케일바의 컨테이너 뷰
         scaleBarView = UIView()
         scaleBarView.backgroundColor = .clear
         mapView.addSubview(scaleBarView)
         
-        // 스케일 바 선
+        // 스케일바의 선
         scaleBarLine = UIView()
         scaleBarLine.backgroundColor = .white
         scaleBarLine.layer.borderWidth = 1
         scaleBarLine.layer.borderColor = UIColor.black.withAlphaComponent(0.5).cgColor
         scaleBarView.addSubview(scaleBarLine)
         
-        // 스케일 바 레이블
+        // 스케일바의 레이블
         scaleBarLabel = UILabel()
         scaleBarLabel.font = UIFont.systemFont(ofSize: 10, weight: .regular)
         scaleBarLabel.textColor = UIColor.black.withAlphaComponent(0.8)
         scaleBarLabel.textAlignment = .center
         scaleBarView.addSubview(scaleBarLabel)
         
-        // 레이아웃 설정
+        // 레이아웃을 설정
         scaleBarView.translatesAutoresizingMaskIntoConstraints = false
         scaleBarLine.translatesAutoresizingMaskIntoConstraints = false
         scaleBarLabel.translatesAutoresizingMaskIntoConstraints = false
         
-        // 고정 너비 설정
+        // 고정 너비를 설정
         let fixedContainerWidth: CGFloat = 120
         let initialLineWith: CGFloat = 100 // 초기 라인 너비 (임의)
         
         NSLayoutConstraint.activate([
-            // 컨테이너 위치 및 고정 너비
+            // 컨테이너의 위치와 고정 너비
             scaleBarView.leadingAnchor.constraint(equalTo: mapView.leadingAnchor, constant: 16),
             scaleBarView.bottomAnchor.constraint(equalTo: mapView.bottomAnchor, constant: -16),
             scaleBarView.widthAnchor.constraint(equalToConstant: fixedContainerWidth),
             scaleBarView.heightAnchor.constraint(equalToConstant: 30),
             
-            // 라인 위치 및 초기 너비/높이
+            // 라인의 위치와 초기 너비/높이
             scaleBarLine.leadingAnchor.constraint(equalTo: scaleBarView.leadingAnchor),
             scaleBarLine.bottomAnchor.constraint(equalTo: scaleBarView.bottomAnchor),
             scaleBarLine.widthAnchor.constraint(equalToConstant: initialLineWith), // 초기값, 동적 변경됨
             scaleBarLine.heightAnchor.constraint(equalToConstant: 4),
             
-            // 라벨 위치
+            // 라벨의 위치
             scaleBarLabel.centerXAnchor.constraint(equalTo: scaleBarLine.centerXAnchor),
             scaleBarLabel.topAnchor.constraint(equalTo: scaleBarLine.bottomAnchor, constant: 2)
         ])
         
-        // 초기 텍스트 설정
+        // 초기 텍스트를 설정
         scaleBarLabel.text = "1 km"
         
-        // 고정된 눈금 추가 제거
+        // 고정된 눈금을 추가하는 코드를 제거
         // addScaleMarkers(referenceWidth: markerReferenceWidth)
         
-        // 스케일 바 초기 업데이트
+        // 스케일바의 초기 업데이트
         updateScaleBar()
     }
     
@@ -473,7 +473,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         print("📏 핀치 줌 감지됨, 반경 변경 기능 비활성화 (현재 반경: \(searchRadius)m)")
     }
     
-    // 스케일 바 업데이트
+    // 스케일바 업데이트
     private func updateScaleBar() {
         // nil 체크 및 필요한 요소 가져오기
         guard let mapView = self.mapView,
@@ -481,7 +481,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
               let scaleBarLabel = self.scaleBarLabel,
               let scaleBarView = self.scaleBarView // scaleBarView도 guard에 포함
         else {
-            //print("⚠️ 스케일 바 업데이트 불가: 지도 또는 UI 요소 미초기화")
+            //print("⚠️ 스케일바 업데이트 불가: 지도 또는 UI 요소 미초기화")
             return
         }
         // projection은 mapView가 nil이 아니면 항상 존재하므로 직접 할당
@@ -542,7 +542,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             // 레이블 텍스트 업데이트
             scaleBarLabel.text = displayText
             
-            // 스케일 바 라인 너비 업데이트
+            // 스케일바 라인 너비 업데이트
             if let existingConstraint = scaleBarLine.constraints.first(where: { $0.firstAttribute == .width }) {
                 existingConstraint.isActive = false
                 scaleBarLine.removeConstraint(existingConstraint)
@@ -560,32 +560,32 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // MARK: - GMSMapViewDelegate
     
-    // 카메라 이동이 완료된 후 호출
+    // 카메라의 이동이 완료된 후에 호출되는
     func mapView(_ mapView: GMSMapView, didChange position: GMSCameraPosition) {
-        // 스케일 바 업데이트
+        // 스케일바를 업데이트
         updateScaleBar()
         
-        // 디버깅용: 줌 레벨 변경 시 보이는 반경 확인
+        // 디버깅용: 줌 레벨 변경 시에 표시되는 반경 확인
         debugCheckVisibleRadius()
         
         // 디버깅용
         print("📏 줌 레벨 변경: \(position.zoom)")
     }
 
-    // 지도가 유휴 상태일 때 호출 (애니메이션 완료 등)
+    // 지도가 비활성 상태일 때 호출되는 (애니메이션 완료 등)
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
-        // 카메라 이동이 멈추면 프로그램적 줌 변경 플래그를 해제
+        // 카메라의 이동이 중지된 후에 프로그램적인 줌 변경 플래그를 해제
         self.isProgrammaticZoomChange = false
-        print("🗺️ 지도 유휴 상태, isProgrammaticZoomChange = false")
+        print("🗺️ 지도 비활성 상태, isProgrammaticZoomChange = false")
     }
     
-    // 지도 로드 완료 시 호출
+    // 지도의 로드 완료 시에 호출되는
     func mapViewDidFinishTileRendering(_ mapView: GMSMapView) {
         // 지도 타일 렌더링 완료
         print("🗺️ 지도 타일 렌더링 완료")
     }
     
-    // Google 로고 위치 조정
+    // Google로고의 위치를 조정
     private func adjustGoogleLogo() {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
@@ -594,7 +594,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                 // 로고를 오른쪽 하단으로 이동
                 logoView.translatesAutoresizingMaskIntoConstraints = false
                 
-                // 기존 제약조건 제거
+                // 기존의 제약 제거
                 if let superview = logoView.superview {
                     for constraint in superview.constraints {
                         if constraint.firstItem === logoView || constraint.secondItem === logoView {
@@ -603,7 +603,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                     }
                 }
                 
-                // 로고 크기 강제로 작게 만들기
+                // 로고의 사이즈를 강제로 작게 만들기
                 logoView.contentMode = .scaleAspectFit
                 
                 if let superview = logoView.superview {
@@ -616,14 +616,14 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                 }
                 
                 self.view.layoutIfNeeded()
-                print("✅ Google 로고 위치 조정됨")
+                print("✅ Google로고 위치 조정 완료")
             } else {
-                print("⚠️ Google 로고를 찾을 수 없음")
+                print("⚠️ Google로고를 찾을 수 없습니다")
             }
         }
     }
     
-    // Google 로고 뷰 찾기
+    // Google로고 뷰를 찾기
     private func findGoogleLogo(in view: UIView) -> UIView? {
         if view.isKind(of: NSClassFromString("GMSUISettingsView") ?? UIView.self) {
             return view
@@ -638,22 +638,22 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         return nil
     }
     
-    // 반경에 맞게 지도 줌 레벨 조정
+    // 반경에 따라 지도의 줌 레벨을 조정
     private func adjustZoomToFitRadius(_ radius: Double) {
         guard let location = currentLocation else { 
-            print("⚠️ 현재 위치 정보 없어 줌 조정 실패")
+            print("⚠️ 현재 위치 정보가 없습니다 줌 조정 실패")
             return 
         }
         
-        // 유효한 반경으로 제한 (300m ~ 3000m)
+        // 유효한 반경에 제한 (300m ~ 3000m)
         let validRadius = min(max(radius, 300.0), 3000.0)
         
-        // 반경에 따른 적절한 줌 레벨 계산 - Google Maps 특성상 각 값 미세 조정
+        // 반경에 따른 적절한 줌 레벨 계산 - Google Maps의 특성상 각 값 약간 조정
         var zoomLevel: Float
         
         switch validRadius {
         case ...300:
-            zoomLevel = 16.5 // 300m - 정확히 300m가 보이도록 조정
+            zoomLevel = 16.5 // 300m - 정확히 300m가 표시되도록 조정
         case ...500:
             zoomLevel = 16.0 // 500m
         case ...1000:
@@ -663,12 +663,12 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         case ...3000:
             zoomLevel = 13.0 // 3km
         default:
-            zoomLevel = 13.0 // 3km 이상은 없지만 안전장치로 유지
+            zoomLevel = 13.0 // 3km 이상은 없지만 안전을 위해 유지
         }
         
-        print("🔍 반경 \(validRadius)m에 맞게 줌 레벨 조정: \(zoomLevel)")
+        print("🔍 반경 \(validRadius)m에 따른 줌 레벨 조정: \(zoomLevel)")
         
-        // 애니메이션과 함께 카메라 이동 - 현재 위치 중심
+        // 애니메이션과 함께 카메라를 이동 - 현재 위치 중심
         let cameraUpdate = GMSCameraUpdate.setTarget(location.coordinate, zoom: zoomLevel)
         mapView.animate(with: cameraUpdate)
 
@@ -676,29 +676,29 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         debugCheckVisibleRadius()
     }
     
-    // 검색 반경 설정 (버튼 클릭에 대응하는 함수)
+    // 검색 범위 설정 (버튼 클릭에 대응하는 함수)
     func setSearchRadius(_ radius: Double) {
         // 유효한 범위 확인 (300m~3000m)
         let validRadius = min(max(radius, 300.0), 3000.0)
 
-        print("🎯 지도 검색 반경 설정: \(validRadius)m, 기존: \(searchRadius)m")
+        print("🎯 지도 검색 범위 설정: \(validRadius)m, 이전: \(searchRadius)m")
 
-        // 반경이 변경되었을 경우에만 처리
+        // 반경이 변경된 경우에만 처리
         if abs(searchRadius - validRadius) > 0.1 {
             // --- 수정된 코드 시작 ---
             // searchRadius 설정 전에 플래그를 먼저 설정
             self.isProgrammaticZoomChange = true
             // --- 수정된 코드 끝 ---
 
-            // 검색 반경 설정 (didSet 호출됨)
+            // 검색 범위 설정 (didSet 호출)
             self.searchRadius = validRadius
 
-            // 선택된 반경에 맞는 줌 레벨로 지도 조정 (bounds 기반으로 통일)
+            // 선택된 반경에 따른 지도 조정 (bounds 기반 통일)
             updateMapZoomForRadius() // 수정: bounds 기반 줌 업데이트 호출
         }
     }
     
-    // NativeMapView에서 반경 버튼 클릭 시 호출될 메서드
+    // NativeMapView에서 반경 버튼 클릭 시에 호출되는 메서드
     func handleRadiusButtonTap(radius: Double) {
         setSearchRadius(radius)
     }
@@ -709,10 +709,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         radiusLabel.isHidden = false
         radiusLabel.alpha = 1.0
         
-        // 기존 타이머 취소
+        // 기존의 타이머 취소
         NSObject.cancelPreviousPerformRequests(withTarget: self, selector: #selector(fadeOutRadiusLabel), object: nil)
         
-        // 2초 후 레이블 서서히 사라지게
+        // 2초 후에 레이블이 서서히 사라지기
         perform(#selector(fadeOutRadiusLabel), with: nil, afterDelay: 2.0)
     }
     
@@ -728,29 +728,29 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         }
     }
     
-    // 지도 핀치에 따라 검색 반경 업데이트 (스케일바와 동기화된 새 방식)
+    // 지도의 핀치에 따라 검색 범위를 업데이트 (스케일바와 동기화된 새로운 방법)
     private func updateSearchRadiusFromVisibleRegion() {
-        // 스케일바가 업데이트될 때 함께 검색 반경도 업데이트되므로
+        // 스케일바가 업데이트될 때 동시에 검색 범위도 업데이트되므로
         // 여기서는 스케일바 업데이트만 호출
         updateScaleBar()
     }
 
-    // 반경 변경 시 지도 뷰 업데이트
+    // 반경 변경 시 지도 뷰를 업데이트
     private func updateMapZoomForRadius() {
-        // radiusCircle의 position과 radius를 사용하여 bounds 계산
+        // radiusCircle의 position과 radius를 사용하여 bounds를 계산
         guard let center = self.radiusCircle?.position else {
-            print("⚠️ 반경 원(radiusCircle) 또는 중심(position)을 찾을 수 없어 줌 업데이트 실패")
+            print("⚠️ 반경의 원(radiusCircle)이나 중심(position)을 찾을 수 없습니다 줌 업데이트 실패")
             return
         }
-        let radius = self.radiusCircle?.radius ?? self.searchRadius // 혹시 circle이 nil이면 searchRadius 사용
+        let radius = self.radiusCircle?.radius ?? self.searchRadius // 만약 circle이 nil인 경우는 searchRadius를 사용
 
-        // 북, 동, 남, 서 방향으로 radius만큼 떨어진 지점 계산
+        // 북, 동, 남, 서 방향으로 radius만큼 떨어진 위치 계산
         let northCoord = GMSGeometryOffset(center, radius, 0)    // Heading 0 = North
         let eastCoord  = GMSGeometryOffset(center, radius, 90)   // Heading 90 = East
         let southCoord = GMSGeometryOffset(center, radius, 180)  // Heading 180 = South
         let westCoord  = GMSGeometryOffset(center, radius, 270)  // Heading 270 = West
 
-        // 계산된 지점들을 이용하여 북동(NE), 남서(SW) 좌표 생성
+        // 계산된 위치를 사용하여 북동(NE), 남서(SW) 좌표 생성
         let northEast = CLLocationCoordinate2D(latitude: northCoord.latitude, longitude: eastCoord.longitude)
         let southWest = CLLocationCoordinate2D(latitude: southCoord.latitude, longitude: westCoord.longitude)
 
@@ -758,35 +758,35 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         let bounds = GMSCoordinateBounds(coordinate: southWest, coordinate: northEast)
 
         // bounds에 맞춰 카메라 업데이트 (패딩 포함)
-        let cameraUpdate = GMSCameraUpdate.fit(bounds, withPadding: 50.0) // 50 포인트 패딩
+        let cameraUpdate = GMSCameraUpdate.fit(bounds, withPadding: 50.0) // 50포인트 패딩
 
-        // 애니메이션 시작 전 플래그 설정
+        // 애니메이션 시작 전에 플래그 설정
         self.isProgrammaticZoomChange = true
         mapView.animate(with: cameraUpdate)
 
         print("🗺️ 지도 줌 업데이트 완료: 반경 \(searchRadius)m")
     }
 
-    // MARK: - 식당 마커 관련 메서드
+    // MARK: - 레스토랑 마커 관련 메서드
     
-    // 식당 마커 업데이트
+    // 레스토랑 마커를 업데이트
     private func updateRestaurantMarkers() {
-        // 기존 마커 모두 제거
+        // 기존의 마커를 모두 제거
         clearAllRestaurantMarkers()
         
-        // 테마가 선택되지 않았으면 마커를 추가하지 않음
+        // 테마가 선택되지 않은 경우는 마커를 추가하지 않음
         if selectedTheme == nil {
-            print("🔍 선택된 테마가 없어 지도에 표시할 마커 없음")
+            print("🔍 선택된 테마가 없으므로 지도에 표시할 마커가 없습니다")
             return
         }
         
-        // 새 마커 추가
+        // 새로운 마커 추가
         for restaurant in restaurants {
             addRestaurantMarker(restaurant)
         }
     }
     
-    // 모든 식당 마커 제거
+    // 모든 레스토랑 마커를 제거
     private func clearAllRestaurantMarkers() {
         for marker in restaurantMarkers.values {
             marker.map = nil
@@ -794,15 +794,15 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         restaurantMarkers.removeAll()
     }
     
-    // 식당 마커 추가
+    // 레스토랑 마커 추가
     private func addRestaurantMarker(_ restaurant: HotPepperRestaurant) {
         let position = CLLocationCoordinate2D(latitude: restaurant.lat, longitude: restaurant.lng)
         let marker = GMSMarker(position: position)
         
-        // 마커 제목 및 스니펫 설정 - Optional 문자열 방지
+        // 마커의 제목과 스니펫을 설정 - Optional 문자열 피하기
         marker.title = restaurant.name
         
-        // Optional 값 안전하게 처리
+        // Optional 값을 안전하게 처리
         if let catchPhrase = restaurant.catchPhrase {
             marker.snippet = catchPhrase
         } else {
@@ -819,10 +819,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             }
         }
         
-        // 마커 아이콘 커스터마이징 (음식점 아이콘 사용)
+        // 마커 아이콘을 커스터마이즈 (레스토랑 아이콘 사용)
         marker.icon = GMSMarker.markerImage(with: .orange)
         
-        // 식당 ID를 마커의 userData에 저장
+        // 레스토랑 ID를 마커의 userData에 저장
         marker.userData = restaurant.id
         
         // 지도에 마커 표시
@@ -834,13 +834,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     
     // 마커 탭 이벤트 처리
     func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
-        // 마커의 정보 창을 표시
-        return false // false를 반환하면 기본 정보 창이 표시됨
+        // 마커의 정보 창 표시
+        return false // false를 반환하면 기본 정보 창이 표시됩니다
     }
     
-    // 마커 인포윈도우 커스터마이징
+    // 마커 인포 창을 커스터마이즈
     func mapView(_ mapView: GMSMapView, markerInfoWindow marker: GMSMarker) -> UIView? {
-        // 커스텀 인포윈도우 생성
+        // 커스텀 인포 창 생성
         let infoWindow = UIView(frame: CGRect(x: 0, y: 0, width: 250, height: 100)) // 높이 증가
         infoWindow.backgroundColor = UIColor.white
         infoWindow.layer.cornerRadius = 10
@@ -849,7 +849,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         infoWindow.layer.shadowOpacity = 0.2
         infoWindow.layer.shadowRadius = 4
         
-        // 타이틀 레이블
+        // 제목 레이블
         let titleLabel = UILabel(frame: CGRect(x: 15, y: 10, width: 220, height: 30))
         titleLabel.font = UIFont.boldSystemFont(ofSize: 15)
         titleLabel.textColor = UIColor.black
@@ -873,17 +873,17 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         infoWindow.addSubview(snippetLabel)
         infoWindow.addSubview(detailsButton)
         
-        // 인포윈도우에 탭 제스처 추가
+        // 인포 창에 탭 제스처를 추가
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(infoWindowTapped(_:)))
         infoWindow.addGestureRecognizer(tapGesture)
         infoWindow.isUserInteractionEnabled = true
         
         // 마커의 userData에서 restaurantId 가져오기
         if let restaurantId = marker.userData as? String {
-            // 태그에 식당 ID 저장 (나중에 식별하기 위해)
+            // 태그에 레스토랑 ID 저장 (나중에 식별하기 위함)
             infoWindow.tag = restaurantId.hashValue
             
-            // 사용자 정의 태그 데이터 추가
+            // 유저 정의 태그 데이터 추가
             objc_setAssociatedObject(infoWindow, &AssociatedKeys.restaurantId, restaurantId, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
         
@@ -895,80 +895,80 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         static var restaurantId = "restaurantId"
     }
     
-    // 인포윈도우 탭 이벤트 처리
+    // 인포 창 탭 이벤트 처리
     @objc func infoWindowTapped(_ sender: UITapGestureRecognizer) {
         guard let infoWindow = sender.view else { return }
         
-        // 연관 객체에서 식당 ID 가져오기
+        // 연관 객체에서 restaurantId 가져오기
         guard let restaurantId = objc_getAssociatedObject(infoWindow, &AssociatedKeys.restaurantId) as? String else { return }
         
-        // 식당 ID로 식당 정보 찾기
+        // restaurantId로 레스토랑 정보 찾기
         if let restaurant = restaurants.first(where: { $0.id == restaurantId }) {
-            print("🔍 인포윈도우 탭: 식당 \(restaurant.name) 선택됨")
+            print("🔍 인포 창 탭: 레스토랑 \(restaurant.name)가 선택됨")
             
             // 콜백 호출하여 상세 페이지로 이동
             onRestaurantSelected?(restaurant)
         }
     }
     
-    // 인포윈도우 탭 델리게이트 메서드 - 이 방법이 더 안정적
+    // 인포 창 탭 델리게이트 메서드 - 이 방법이 더 안정적
     func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) {
-        print("🔍 인포윈도우 탭 델리게이트: 마커 탭됨")
+        print("🔍 인포 창 탭 델리게이트: 마커 탭됨")
         
         // 마커의 userData에서 restaurantId 가져오기
         if let restaurantId = marker.userData as? String {
-            print("🔍 마커에서 식당 ID 찾음: \(restaurantId)")
+            print("🔍 마커에서 레스토랑 ID 찾음: \(restaurantId)")
             
-            // 식당 ID로 식당 정보 찾기
+            // restaurantId로 레스토랑 정보 찾기
             if let restaurant = restaurants.first(where: { $0.id == restaurantId }) {
-                print("🔍 인포윈도우 탭 델리게이트: 식당 \(restaurant.name) 선택됨")
-                print("🔍 콜백 함수 존재 여부: \(onRestaurantSelected != nil ? "있음" : "없음")")
+                print("🔍 인포 창 탭 델리게이트: 레스토랑 \(restaurant.name)가 선택됨")
+                print("🔍 콜백 함수 존재 확인: \(onRestaurantSelected != nil ? "있습니다" : "없습니다")")
                 
                 // 콜백 호출하여 상세 페이지로 이동
                 DispatchQueue.main.async {
                     self.onRestaurantSelected?(restaurant)
-                    print("🔍 식당 선택 콜백 호출 완료: \(restaurant.name)")
+                    print("🔍 레스토랑 선택 콜백 완료: \(restaurant.name)")
                 }
             } else {
-                print("⚠️ 식당 ID \(restaurantId)에 해당하는 식당을 찾을 수 없음")
-                print("⚠️ 현재 저장된 식당 수: \(self.restaurants.count)")
+                print("⚠️ 레스토랑 ID \(restaurantId)에 대응하는 레스토랑을 찾을 수 없습니다")
+                print("⚠️ 현재 저장된 레스토랑 수: \(self.restaurants.count)")
             }
         } else {
-            print("⚠️ 마커의 userData에서 식당 ID를 찾을 수 없음")
+            print("⚠️ 마커의 userData에서 레스토랑 ID를 찾을 수 없습니다")
             if let userData = marker.userData {
                 print("⚠️ userData 타입: \(type(of: userData))")
             } else {
-                print("⚠️ userData가 nil임")
+                print("⚠️ userData가 nil입니다")
             }
         }
     }
     
-    // 식당 검색 실행
+    // 레스토랑 검색 실행
     func searchRestaurants(theme: String? = nil) {
         guard let location = currentLocation else {
-            print("⚠️ 현재 위치 정보 없어 검색 실패")
+            print("⚠️ 현재 위치 정보가 없으므로 검색 실패")
             return
         }
         
-        // 테마 파라미터가 제공되면 그 값을 사용, 아니면 클래스 속성 사용
+        // 테마 파라메터가 제공되는 경우는 해당 값을 사용, 없는 경우는 클래스 속성을 사용
         let themeToUse = theme ?? selectedTheme
         
-        // 테마가 선택되지 않은 경우, 기존 마커만 제거하고 API 호출하지 않음
+        // 테마가 선택되지 않은 경우는 기존의 마커를 제거하고 API 호출하지 않음
         if themeToUse == nil {
-            print("🔍 선택된 테마가 없어 검색하지 않고 기존 마커만 제거")
+            print("🔍 선택된 테마가 없으므로 검색하지 않고 기존의 마커를 제거")
             clearAllRestaurantMarkers()
-            // 빈 배열로 결과 콜백 호출하여 UI 업데이트
+            // 빈 배열을 결과 콜백 호출하여 UI 업데이트
             searchResultsCallback?([])
             return
         }
         
-        // 검색 진행 중임을 표시
-        // (추가 UI가 필요하면 여기에 구현)
+        // 검색 진행 중 표시
+        // (필요한 경우는 여기에 구현)
         
-        // API 반경 값 변환
+        // API 범위값으로 변환
         let rangeValue = getAPIRangeValue(forMeters: searchRadius)
         
-        print("🔍 지도에서 검색 요청: 반경 \(searchRadius)m (API 값: \(rangeValue))")
+        print("🔍 지도에서 검색 요청: 반경 \(searchRadius)m (API값: \(rangeValue))")
         print("🔍 검색 좌표: 위도 \(location.coordinate.latitude), 경도 \(location.coordinate.longitude)")
         print("🔍 선택된 테마: \(themeToUse ?? "")")
         
@@ -977,17 +977,17 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             theme: themeToUse!,
             lat: location.coordinate.latitude,
             lng: location.coordinate.longitude,
-            range: rangeValue // 사용자가 선택한 반경 사용
+            range: rangeValue // 유저가 선택한 반경 사용
         ) { [weak self] restaurants in
             guard let self = self else { return }
             
             // 메인 스레드에서 UI 업데이트
             DispatchQueue.main.async {
-                print("📍 테마 API 응답: \(restaurants.count)개 음식점 데이터 수신")
+                print("📍 테마 API 응답: \(restaurants.count)개의 레스토랑 데이터 수신")
                 
-                // 결과 없음 처리
+                // 결과가 없는 경우 처리
                 if restaurants.isEmpty {
-                    print("⚠️ 검색 결과가 없습니다.")
+                    print("⚠️ 검색 결과가 없습니다")
                     self.restaurants = []
                     self.searchResultsCallback?([])
                     return
@@ -999,7 +999,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                     updatedRestaurants = updatedRestaurants.map { restaurant in
                         var updatedRestaurant = restaurant
                         
-                        // 음식점 위치 설정
+                        // 레스토랑 위치 설정
                         let restaurantLocation = CLLocation(latitude: restaurant.lat, longitude: restaurant.lng)
                         
                         // 거리 계산 (미터 단위)
@@ -1010,13 +1010,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
                         return updatedRestaurant
                     }
                     
-                    // 거리순으로 정렬
+                    // 거리 순으로 정렬
                     updatedRestaurants.sort { ($0.distance ?? 0) < ($1.distance ?? 0) }
                 }
                 
-                print("✅ 테마 검색 완료: \(updatedRestaurants.count)개 음식점 찾음")
+                print("✅ 테마 검색 완료: \(updatedRestaurants.count)개의 레스토랑 찾음")
                 
-                // 검색 결과 업데이트 (didSet 트리거하여 마커 표시)
+                // 검색 결과 업데이트 (didSet 트리거하기 위해 마커 표시)
                 self.restaurants = updatedRestaurants
                 
                 // 검색 결과 콜백 호출
@@ -1025,10 +1025,10 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         }
     }
     
-    // 취소 가능한 구독 저장
+    // 취소 가능한 서브스크립션 저장
     private var cancellables = Set<AnyCancellable>()
     
-    // API range 값 변환 (미터 -> API 사용 범위 값)
+    // API 범위값으로 변환 (미터 -> API 사용 범위값)
     private func getAPIRangeValue(forMeters meters: Double) -> Int {
         switch meters {
         case ...300: return 1
@@ -1040,7 +1040,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     }
 }
 
-// 패딩이 있는 라벨 클래스 (UILabel 확장 대신 서브클래스 사용)
+// 패딩이 있는 레이블 클래스 (UILabel 확장이 아닌 서브클래스를 사용)
 class PaddingLabel: UILabel {
     private var insets: UIEdgeInsets
     
@@ -1069,48 +1069,48 @@ class PaddingLabel: UILabel {
 
 // SwiftUI에서 사용할 수 있는 MapView
 struct NativeMapView: UIViewControllerRepresentable {
-    // 위치 바인딩
+    // 위치 바인드
     @Binding var mapLocation: CLLocation?
-    // 선택된 반경 바인딩
+    // 선택된 반경 바인드
     @Binding var selectedRadius: Double
     // 선택된 테마 (옵션)
     var selectedTheme: String?
-    // 자동 검색 여부 (옵션)
+    // 자동 검색의 유무 (옵션)
     var autoSearch: Bool = true
     // 검색 결과 콜백 (옵션)
     var onSearchResults: (([HotPepperRestaurant]) -> Void)?
     
-    // 식당 선택 콜백 추가
+    // 레스토랑 선택 콜백 추가
     var onRestaurantSelected: ((HotPepperRestaurant) -> Void)?
     
-    // UIViewController 생성
+    // UIViewController를 생성
     func makeUIViewController(context: Context) -> MapViewController {
         let viewController = MapViewController()
         viewController.currentLocation = mapLocation
         viewController.searchRadius = selectedRadius
         viewController.selectedTheme = selectedTheme
         
-        // 반경 변경 콜백 설정
+        // 반경 변경 콜백을 설정
         viewController.radiusChangeCallback = { newRadius in
-            // 지도에서 반경이 변경될 때마다 부모 뷰의 상태 업데이트
+            // 지도에서 반경이 변경될 때마다 부모 뷰의 상태를 업데이트
             DispatchQueue.main.async {
                 selectedRadius = newRadius
                 
-                // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
+                // 자동 검색이 유효한 경우는 반경 변경 시에 자동으로 검색 실행
                 if autoSearch {
                     viewController.searchRestaurants(theme: selectedTheme)
                 }
             }
         }
         
-        // 검색 결과 콜백 설정
+        // 검색 결과 콜백을 설정
         viewController.searchResultsCallback = { restaurants in
             DispatchQueue.main.async {
                 onSearchResults?(restaurants)
             }
         }
         
-        // 식당 선택 콜백 설정
+        // 레스토랑 선택 콜백을 설정
         viewController.onRestaurantSelected = { restaurant in
             DispatchQueue.main.async {
                 onRestaurantSelected?(restaurant)
@@ -1120,9 +1120,9 @@ struct NativeMapView: UIViewControllerRepresentable {
         return viewController
     }
     
-    // UIViewController 업데이트
+    // UIViewController를 업데이트
     func updateUIViewController(_ uiViewController: MapViewController, context: Context) {
-        // 위치 업데이트
+        // 위치를 업데이트
         if let location = mapLocation {
             let locationChanged = uiViewController.currentLocation?.coordinate.latitude != location.coordinate.latitude ||
                                  uiViewController.currentLocation?.coordinate.longitude != location.coordinate.longitude
@@ -1130,9 +1130,9 @@ struct NativeMapView: UIViewControllerRepresentable {
             if locationChanged {
                 uiViewController.updateLocation(location)
                 
-                // 자동 검색이 활성화된 경우 위치 변경 시 자동으로 검색 실행
+                // 자동 검색이 유효한 경우는 위치 변경 시에 자동으로 검색 실행
                 if autoSearch {
-                    // 약간의 지연을 줘서 지도가 업데이트된 후 검색하도록 함
+                    // 약간의 지연을 주어 지도가 업데이트된 후에 검색하도록 함
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                         uiViewController.searchRestaurants(theme: selectedTheme)
                     }
@@ -1140,30 +1140,30 @@ struct NativeMapView: UIViewControllerRepresentable {
             }
         }
         
-        // 테마 업데이트
+        // 테마를 업데이트
         let themeChanged = uiViewController.selectedTheme != selectedTheme
         if themeChanged {
             print("⚡️ NativeMapView: 테마 변경 감지 \(uiViewController.selectedTheme ?? "없음") -> \(selectedTheme ?? "없음")")
             uiViewController.selectedTheme = selectedTheme
             
-            // 테마가 nil로 변경된 경우에도 업데이트 실행 (selectedTheme을 전달)
+            // 테마가 nil로 변경된 경우에도 업데이트 실행 (selectedTheme 전달)
             if autoSearch || selectedTheme == nil {
                 uiViewController.searchRestaurants(theme: selectedTheme)
             }
         }
         
-        // 반경 업데이트
+        // 반경을 업데이트
         if abs(uiViewController.searchRadius - selectedRadius) > 0.1 {
             print("⚡️ NativeMapView: 반경 변경 감지 \(uiViewController.searchRadius) -> \(selectedRadius)")
             uiViewController.setSearchRadius(selectedRadius)
             
-            // 자동 검색이 활성화된 경우 반경 변경 시 자동으로 검색 실행
+            // 자동 검색이 유효한 경우는 반경 변경 시에 자동으로 검색 실행
             if autoSearch {
                 uiViewController.searchRestaurants(theme: selectedTheme)
             }
         }
         
-        // 검색 결과 콜백 업데이트
+        // 검색 결과 콜백을 업데이트
         if uiViewController.searchResultsCallback == nil && onSearchResults != nil {
             uiViewController.searchResultsCallback = { restaurants in
                 DispatchQueue.main.async {

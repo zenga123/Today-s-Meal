@@ -30,7 +30,7 @@ struct ResultsView: View {
                 }) {
                     HStack {
                         Image(systemName: showMapView ? "list.bullet" : "map")
-                        Text(showMapView ? "목록으로 보기" : "지도로 보기")
+                        Text(showMapView ? "リストで見る" : "地図で見る")
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
@@ -74,7 +74,7 @@ struct ResultsView: View {
                 }) {
                     HStack {
                         Image(systemName: "arrow.left")
-                        Text("뒤로")
+                        Text("戻る")
                     }
                 }
             }
@@ -89,17 +89,17 @@ struct ResultsView: View {
                 .frame(width: 80, height: 80)
                 .foregroundColor(.gray)
             
-            Text("음식점을 찾을 수 없습니다")
+            Text("レストランが見つかりません")
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("검색 조건을 변경해 보세요")
+            Text("検索条件を変更してみてください")
                 .foregroundColor(.gray)
             
             Button(action: {
                 dismiss()
             }) {
-                Text("검색으로 돌아가기")
+                Text("検索に戻る")
                     .padding()
                     .background(Color.orange)
                     .foregroundColor(.white)
@@ -125,7 +125,7 @@ struct ResultsView: View {
     }
     
     private func getNavigationTitle() -> String {
-        let baseTitle = "검색 결과 (\(restaurants.count))"
+        let baseTitle = "検索結果 (\(restaurants.count))"
         if let theme = theme {
             return "\(baseTitle) - \(theme)"
         } else {
@@ -174,18 +174,18 @@ struct SearchResultRow: View {
                     .font(.headline)
                     .lineLimit(1)
                 
-                Text(restaurant.genre?.name ?? "장르 정보 없음")
+                Text(restaurant.genre?.name ?? "ジャンル情報なし")
                     .font(.subheadline)
                     .foregroundColor(.gray)
                 
-                Text(restaurant.access ?? "위치 정보 없음")
+                Text(restaurant.access ?? "位置情報なし")
                     .font(.caption)
                     .lineLimit(2)
                     .foregroundColor(.secondary)
                 
                 HStack {
                     Image(systemName: "yen.circle.fill")
-                    Text(restaurant.budget?.name ?? "가격 정보 없음")
+                    Text(restaurant.budget?.name ?? "価格情報なし")
                     
                     if let distance = restaurant.distance {
                         Spacer()

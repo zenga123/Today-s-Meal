@@ -88,7 +88,7 @@ struct RestaurantRow: View {
                     }
                     
                     // 거리
-                    Text("\(formattedDistance(distance)) 거리")
+                    Text("\(formattedDistance(distance)) 距離")
                         .font(.caption)
                         .foregroundColor(.green)
                 }
