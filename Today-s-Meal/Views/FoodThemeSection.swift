@@ -23,7 +23,8 @@ struct FoodThemeSection: View {
                 HStack {
                     // 해당 테마 원형만 표시
                     let label = theme
-                    let useCustomImage = theme == "izakaya"
+                    // 모든 테마에 대해 이미지 사용
+                    let useCustomImage = true
                     
                     EmptyCirclePlaceholder(
                         label: label,
