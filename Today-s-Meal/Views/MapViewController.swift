@@ -431,7 +431,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
             formattedSearchRadius = "\(Int(searchRadius)) m"
         }
         
-        print("📏 화면에 보이는 실제 반경: \(Int(visibleRadius))m (설정된 반경: \(formattedSearchRadius))")
+        // print("📏 화면에 보이는 실제 반경: \(Int(visibleRadius))m (설정된 반경: \(formattedSearchRadius))")
     }
     
     // 스케일바 거리를 기반으로 검색 반경 업데이트 (완전 동기화)
@@ -574,9 +574,6 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 디버깅용: 줌 레벨 변경 시에 표시되는 반경 확인
         debugCheckVisibleRadius()
-        
-        // 디버깅용
-        print("📏 줌 레벨 변경: \(position.zoom)")
     }
 
     // 지도가 비활성 상태일 때 호출되는 (애니메이션 완료 등)
