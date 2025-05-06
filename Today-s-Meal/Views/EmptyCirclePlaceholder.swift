@@ -64,8 +64,12 @@ struct EmptyCirclePlaceholder: View {
                     .font(.caption)
                     .fontWeight(isSelected ? .bold : .medium)
                     .foregroundColor(isSelected ? .orange : .gray)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 80)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
             }
-            .frame(width: 80, height: 80)
+            .frame(width: 80, height: 100)
         }
         .buttonStyle(PlainButtonStyle()) // 버튼 스타일 제거
     }

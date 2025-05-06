@@ -37,7 +37,7 @@ struct FoodThemeSection: View {
                     
                     Spacer()
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, 16)
             } else {
                 // 첫 번째 줄 (1-4)
                 HStack(spacing: 12) {
@@ -74,7 +74,7 @@ struct FoodThemeSection: View {
                         selectedTheme = selectedTheme == "和食" ? nil : "和食"
                     }
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, 16)
                 
                 // 두 번째 줄 (5-8)
                 HStack(spacing: 12) {
@@ -110,7 +110,7 @@ struct FoodThemeSection: View {
                         selectedTheme = selectedTheme == "焼肉・ホルモン" ? nil : "焼肉・ホルモン"
                     }
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, 16)
                 
                 // 세 번째 줄 (9-12)
                 HStack(spacing: 12) {
@@ -146,7 +146,7 @@ struct FoodThemeSection: View {
                         selectedTheme = selectedTheme == "カラオケ・パーティ" ? nil : "カラオケ・パーティ"
                     }
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, 16)
                 
                 // 네 번째 줄 (13-16)
                 HStack(spacing: 12) {
@@ -182,7 +182,7 @@ struct FoodThemeSection: View {
                         selectedTheme = selectedTheme == "カフェ・スイーツ" ? nil : "カフェ・スイーツ"
                     }
                 }
-                .padding(.bottom, 12)
+                .padding(.bottom, 16)
                 
                 // 다섯 번째 줄 (17)
                 HStack(spacing: 12) {

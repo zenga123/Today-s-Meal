@@ -633,7 +633,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                 <div class="spinner"></div>
             </div>
             <div id="error" style="display: none;">
-                <p>길찾기 정보를 불러올 수 없습니다.<br>직선 거리로 표시합니다.</p>
+                <p>ルート情報を読み込めません。<br>直線距離で表示します。</p>
             </div>
             
             <script>
@@ -679,7 +679,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     if (!mapInitialized) {
                         // Google Maps API가 로딩되었는지 확인
                         if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
-                            sendToiOS("ERROR: Google Maps API가 로딩되지 않았습니다. 직선 경로를 표시할 수 없습니다.");
+                            sendToiOS("ERROR: Google Maps APIが読み込まれていません。直線ルートを表示できません。");
                             document.getElementById('error').style.display = 'flex';
                             return;
                         }
@@ -691,12 +691,13 @@ struct GoogleMapsWebView: UIViewRepresentable {
                             zoomControl: true,
                             mapTypeControl: false,
                             streetViewControl: false,
-                            fullscreenControl: false
+                            fullscreenControl: false,
+                            language: "ja"
                         });
                         mapInitialized = true;
                         
                         // 지도 로드 확인
-                        sendToiOS("직선 경로 지도 초기화됨");
+                        sendToiOS("地図初期化完了");
                     }
                     
                     // 직선 경로 그리기
@@ -722,7 +723,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     const startMarker = new google.maps.Marker({
                         position: userLocation,
                         map: map,
-                        title: "현재 위치",
+                        title: "現在位置",
                         icon: {
                             path: google.maps.SymbolPath.CIRCLE,
                             fillColor: '#4285F4',
@@ -760,7 +761,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     
                     // 정보창 대신 상단 패널에 정보 표시
                     const infoPanel = document.getElementById("infoPanel");
-                    infoPanel.innerHTML = `<b>거리:</b> ${distanceText} <b>예상:</b> 약 ${minutes}분`;
+                    infoPanel.innerHTML = `<b>距離:</b> ${distanceText} <b>予想:</b> 約 ${minutes}分`;
                     infoPanel.style.display = "block";
                     
                     // 지도 강제 리사이즈 (렌더링 문제 해결)
@@ -770,12 +771,12 @@ struct GoogleMapsWebView: UIViewRepresentable {
                         
                         // 지도 요소 디버깅
                         const mapElement = document.getElementById('map');
-                        sendToiOS(`지도 요소 크기: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
+                        sendToiOS(`地図要素のサイズ: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
                     }, 500);
                     
-                    sendToiOS("직선 경로 표시 완료");
+                    sendToiOS("直線ルート表示完了");
                 } catch (e) {
-                    console.error("직선 경로 표시 오류:", e.message);
+                    console.error("直線ルート表示エラー:", e.message);
                     document.getElementById('error').style.display = 'flex';
                 }
             }
@@ -790,7 +791,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
             // 지도 초기화
             function initMap() {
                 try {
-                    sendToiOS("지도 초기화 시작");
+                    sendToiOS("地図初期化開始");
                     
                     const userLocation = { lat: \(userLatitude), lng: \(userLongitude) };
                     const destination = { lat: \(destinationLatitude), lng: \(destinationLongitude) };
@@ -798,14 +799,14 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     // 좌표 유효성 검사
                     if (isNaN(userLocation.lat) || isNaN(userLocation.lng) || 
                         isNaN(destination.lat) || isNaN(destination.lng)) {
-                        sendToiOS("ERROR: 유효하지 않은 좌표 값");
-                        showStraightRoute();
+                        sendToiOS("ERROR: 無効な座標値");
+                        showError();
                         return;
                     }
                     
                     // 지도 요소 디버깅
                     const mapElement = document.getElementById('map');
-                    sendToiOS(`지도 초기화 전 요소 크기: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
+                    sendToiOS(`地図初期化前の要素サイズ: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
                     
                     // 지도 초기화 - 스타일 단순화
                     map = new google.maps.Map(document.getElementById("map"), {
@@ -815,11 +816,12 @@ struct GoogleMapsWebView: UIViewRepresentable {
                         zoomControl: true,
                         mapTypeControl: false,
                         streetViewControl: false,
-                        fullscreenControl: false
+                        fullscreenControl: false,
+                        language: "ja"
                     });
                     
                     mapInitialized = true;
-                    sendToiOS("지도 객체 생성됨");
+                    sendToiOS("地図オブジェクト生成完了");
                     
                     // 경로 서비스 및 렌더러 초기화
                     directionsService = new google.maps.DirectionsService();
@@ -828,8 +830,10 @@ struct GoogleMapsWebView: UIViewRepresentable {
                         suppressMarkers: true,  // 기본 마커 표시 안 함
                         polylineOptions: {
                             strokeColor: '#4285F4',
-                            strokeWeight: 5
-                        }
+                            strokeWeight: 5,
+                            strokeOpacity: 0.8
+                        },
+                        language: "ja"
                     });
                     
                     // 목적지 마커 추가
@@ -842,8 +846,8 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     
                     // 경로 요청
                     if (Math.abs(userLocation.lat) < 0.001 && Math.abs(userLocation.lng) < 0.001) {
-                        sendToiOS("유효하지 않은 사용자 위치: " + JSON.stringify(userLocation));
-                        showStraightRoute();
+                        sendToiOS("無効なユーザー位置: " + JSON.stringify(userLocation));
+                        showError();
                         return;
                     }
                     
@@ -853,7 +857,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                         travelMode: 'WALKING'
                     };
                     
-                    sendToiOS("경로 요청 시작: " + JSON.stringify(request));
+                    sendToiOS("ルート計算成功: 距離 ${distance}, 所要時間 ${duration}");
                     
                     directionsService.route(request, function(response, status) {
                         if (status === 'OK') {
@@ -871,7 +875,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                             const startMarker = new google.maps.Marker({
                                 position: userLocation,
                                 map: map,
-                                title: "현재 위치",
+                                title: "現在位置",
                                 icon: {
                                     path: google.maps.SymbolPath.CIRCLE,
                                     fillColor: '#4285F4',
@@ -882,11 +886,11 @@ struct GoogleMapsWebView: UIViewRepresentable {
                                 }
                             });
                             
-                            sendToiOS(`경로 계산 성공: 거리 ${distance}, 소요 시간 ${duration}`);
+                            sendToiOS(`ルート計算成功: 距離 ${distance}, 所要時間 ${duration}`);
                             
                             // 정보창 대신 상단 패널에 정보 표시
                             const infoPanel = document.getElementById("infoPanel");
-                            infoPanel.innerHTML = `<b>거리:</b> ${distance} <b>소요:</b> ${duration}`;
+                            infoPanel.innerHTML = `<b>距離:</b> ${distance} <b>所要:</b> ${duration}`;
                             infoPanel.style.display = "block";
                             
                             // 지도 강제 리사이즈 (렌더링 문제 해결)
@@ -901,17 +905,17 @@ struct GoogleMapsWebView: UIViewRepresentable {
                                 
                                 // 지도 요소 디버깅
                                 const mapElement = document.getElementById('map');
-                                sendToiOS(`지도 요소 최종 크기: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
-                                sendToiOS(`지도 타일 로드 상태: ${map.getTilt ? "로드됨" : "로드안됨"}`);
+                                sendToiOS(`初期地図要素サイズ: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
+                                sendToiOS(`地図タイルの読み込み状態: ${map.getTilt ? "読み込み完了" : "読み込み失敗"}`);
                             }, 500);
                         } else {
-                            sendToiOS("경로 계산 실패: " + status);
-                            showStraightRoute();
+                            sendToiOS("ルート計算失敗: " + status);
+                            showError();
                         }
                     });
                 } catch (e) {
-                    console.error("지도 초기화 오류:", e.message);
-                    showStraightRoute();
+                    console.error("地図初期化エラー:", e.message);
+                    showError();
                 }
             }
             
@@ -921,20 +925,20 @@ struct GoogleMapsWebView: UIViewRepresentable {
                     sendToiOS("ERROR: Google Maps API 로드 실패");
                     showError();
                 } else {
-                    sendToiOS("Google Maps API 로드 완료");
+                    sendToiOS("Google Maps API 読み込み完了");
                     
                     // DOM 디버깅
                     const mapElement = document.getElementById('map');
-                    sendToiOS(`초기 지도 요소 크기: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
+                    sendToiOS(`初期地図要素サイズ: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
                     
                     if (!mapInitialized && typeof initMap === 'function') {
-                        sendToiOS("1초 후 initMap 수동 호출");
+                        sendToiOS("1秒後にinitMap手動呼び出し");
                         initMap();
                     }
                 }
             }, 1000);
             </script>
-            <script src="https://maps.googleapis.com/maps/api/js?key=\(apiKey)&libraries=geometry&callback=initMap" async defer onerror="console.error('Google Maps API 로딩 오류 발생')"></script>
+            <script src="https://maps.googleapis.com/maps/api/js?key=\(apiKey)&libraries=geometry&callback=initMap&language=ja" async defer onerror="console.error('Google Maps API 로딩 오류 발생')"></script>
         </body>
         </html>
         """
@@ -947,11 +951,11 @@ struct GoogleMapsWebView: UIViewRepresentable {
     // 미리보기용 샘플 데이터
     let previewRestaurant = HotPepperRestaurant(
         id: "preview_id",
-        name: "오이시 이자카야",
+        name: "美味しい居酒屋",
         logoImage: nil,
         nameKana: "オイシイザカヤ",
-        address: "도쿄 신주쿠 2-5-1",
-        stationName: "신주쿠역",
+        address: "東京都新宿区2-5-1",
+        stationName: "新宿駅",
         ktaiCoupon: 0,
         largeServiceArea: nil,
         serviceArea: nil,
@@ -960,14 +964,14 @@ struct GoogleMapsWebView: UIViewRepresentable {
         smallArea: nil,
         lat: 35.689722,
         lng: 139.692222,
-        genre: Genre(code: "G001", name: "이자카야", catchPhrase: "맛있는 일본 술과 안주"),
+        genre: Genre(code: "G001", name: "居酒屋", catchPhrase: "美味しい日本酒と酒肴"),
         subGenre: nil,
-        budget: Budget(code: "B001", name: "2,000엔 ~ 3,000엔", average: "2500"),
-        budgetMemo: "1인당 평균 2,500엔",
-        catchPhrase: "신선한 해산물과 다양한 사케를 즐길 수 있는 전통 이자카야",
+        budget: Budget(code: "B001", name: "2,000円 ~ 3,000円", average: "2500"),
+        budgetMemo: "一人当たり平均 2,500円",
+        catchPhrase: "新鮮な海鮮と様々な日本酒が楽しめる伝統的な居酒屋",
         capacity: 50,
-        access: "신주쿠역 동쪽 출구에서 도보 5분",
-        mobileAccess: "신주쿠역에서 도보 5분",
+        access: "新宿駅東口から徒歩5分",
+        mobileAccess: "新宿駅から徒歩5分",
         urls: URLS(pc: "https://www.hotpepper.jp", mobile: "https://m.hotpepper.jp"),
         photo: Photo(
             pc: PC(l: "https://imgfp.hotp.jp/IMGH/30/31/P038183031/P038183031_480.jpg", m: nil, s: nil),
@@ -975,29 +979,29 @@ struct GoogleMapsWebView: UIViewRepresentable {
         ),
         open: "17:00",
         close: "23:30",
-        wifi: "있음",
-        wedding: "가능",
-        course: "있음",
-        freeDrink: "있음",
-        freeFood: "없음",
-        privateRoom: "있음",
-        horigotatsu: "없음",
-        tatami: "있음",
-        card: "가능",
-        nonSmoking: "일부 금연석 있음",
-        charter: "가능",
-        parking: "있음",
-        barrierFree: "있음",
+        wifi: "あり",
+        wedding: "可能",
+        course: "あり",
+        freeDrink: "あり",
+        freeFood: "なし",
+        privateRoom: "あり",
+        horigotatsu: "なし",
+        tatami: "あり",
+        card: "利用可",
+        nonSmoking: "一部禁煙席あり",
+        charter: "可能",
+        parking: "あり",
+        barrierFree: "あり",
         otherMemo: "",
-        sommelier: "없음",
-        openAir: "있음",
-        show: "없음",
-        karaoke: "없음",
-        band: "없음",
-        tv: "있음",
-        english: "가능",
-        pet: "불가",
-        child: "환영"
+        sommelier: "なし",
+        openAir: "あり",
+        show: "なし",
+        karaoke: "なし",
+        band: "なし",
+        tv: "あり",
+        english: "対応可",
+        pet: "不可",
+        child: "歓迎"
     )
     
     return NavigationView {

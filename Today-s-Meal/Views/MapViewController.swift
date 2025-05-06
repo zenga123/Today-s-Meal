@@ -73,6 +73,13 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
     var onRestaurantSelected: ((HotPepperRestaurant) -> Void)?
     
     override func loadView() {
+        // 일본어 언어 설정 - Google Maps SDK 초기화 전에 적용
+        let japaneseLocale = Locale(identifier: "ja_JP")
+        
+        // 현재 선호 언어 출력
+        let preferredLanguages = Locale.preferredLanguages
+        print("🇯🇵 현재 앱 선호 언어: \(preferredLanguages)")
+        
         // Google Maps API 키 설정 (코드로 직접 설정)
         GMSServices.provideAPIKey("AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8")
         

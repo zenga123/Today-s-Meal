@@ -176,15 +176,15 @@ struct RestaurantRow: View {
     RestaurantRow(
         restaurant: Today_s_Meal.Restaurant(
             id: "1",
-            name: "오이시 이자카야",
-            address: "도쿄 신주쿠 2-5-1",
+            name: "美味しい居酒屋",
+            address: "東京都新宿区2-5-1",
             rating: 4.5,
             reviewCount: 120,
             category: "居酒屋",
             latitude: 35.6895,
             longitude: 139.6917,
             imageUrl: nil,
-            access: "신주쿠역 동쪽 출구에서 도보 5분"  // 오시는 길 정보 추가
+            access: "新宿駅東口から徒歩5分"
         ),
         distance: 350
     )
