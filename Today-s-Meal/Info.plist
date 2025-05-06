@@ -18,8 +18,6 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>GMSApiKey</key>
-	<string>AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8</string>
 	<key>GMSBackgroundColor</key>
 	<string>white</string>
 	<key>GMSLanguage</key>
