@@ -79,10 +79,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         // 현재 선호 언어 출력
         let preferredLanguages = Locale.preferredLanguages
         print("🇯🇵 현재 앱 선호 언어: \(preferredLanguages)")
-        
-        // Google Maps API 키 설정 (코드로 직접 설정)
-        GMSServices.provideAPIKey("AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8")
-        
+                
         // 기본 위치 - 서울 (초기값으로 사용, 실제 위치가 업데이트 예정)
         let defaultLocation = CLLocationCoordinate2D(latitude: 37.5665, longitude: 126.9780)
         
@@ -867,7 +864,7 @@ class MapViewController: UIViewController, GMSMapViewDelegate {
         
         // 상세 버튼 추가 - 하단에 "상세 보기" 버튼 표시
         let detailsButton = UIButton(frame: CGRect(x: 15, y: 70, width: 220, height: 25))
-        detailsButton.setTitle("상세 보기 ›", for: .normal)
+        detailsButton.setTitle("詳細を見る ›", for: .normal)
         detailsButton.setTitleColor(UIColor.systemBlue, for: .normal)
         detailsButton.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .medium)
         detailsButton.contentHorizontalAlignment = .right

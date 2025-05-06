@@ -1,13 +1,15 @@
 import UIKit
 import GoogleMaps
 
+// 전역 Google Maps API 키
+let googleApiKey = "ここにGoogle Maps APIキーを入力してください"
+
+// 전역 Hot Pepper API 키
+let hotPepperApiKey = "ここにホットペッパーAPIキーを入力してください"
+
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
-    // Google Maps API 키 직접 설정 (하드코딩)
-    let apiKey = "AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8"
-
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Google Maps 언어를 일본어로 설정 (순수 Swift 방식)
         // 1. 현재 언어 설정 저장
         let currentLanguageSettings = UserDefaults.standard.array(forKey: "AppleLanguages")
         
@@ -15,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UserDefaults.standard.set(["ja"], forKey: "AppleLanguages")
         
         // 3. Google Maps 초기화 (일본어 설정이 적용된 상태)
-        GMSServices.provideAPIKey(apiKey)
+        GMSServices.provideAPIKey(googleApiKey) // 전역 상수 googleApiKey 사용
         
         // 4. 원래 언어 설정 복원
         if let originalSettings = currentLanguageSettings {

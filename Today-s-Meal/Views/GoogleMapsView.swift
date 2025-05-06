@@ -3,13 +3,14 @@ import GoogleMaps
 import CoreLocation
 
 struct GoogleMapsView: UIViewRepresentable {
+    @Binding var selectedRestaurant: Restaurant?
+    var restaurants: [Restaurant]
     @Binding var mapLocation: CLLocation?
     var markers: [GMSMarker] = []
     
     func makeUIView(context: Context) -> GMSMapView {
-        // API 키가 제대로 설정되었는지 확인
-        let apiKey = "AIzaSyDkcxAvN23yEYFGt-V4-2eIqtw86G9oupw"
-        GMSServices.provideAPIKey(apiKey)
+        // API 키가 제대로 설정되었는지 확인 -> AppDelegate에서 이미 초기화하므로 여기서는 호출 불필요
+        // GMSServices.provideAPIKey(googleApiKey) // 전역 상수 사용
         
         // 기본 위치 (서울)
         let defaultLocation = CLLocationCoordinate2D(latitude: 37.5665, longitude: 126.9780)

@@ -292,7 +292,7 @@ struct RestaurantDetailView: View {
                 Link(destination: URL(string: pcUrl) ?? URL(string: "https://www.hotpepper.jp")!) {
                     HStack {
                         Image(systemName: "globe")
-                        Text("公式サイトを訪問")
+                        Text("公式サイト")
                         Spacer()
                         Image(systemName: "arrow.up.right.square")
                     }
@@ -503,7 +503,6 @@ struct GoogleMapsWebView: UIViewRepresentable {
     
     private func loadMapsDirections(_ webView: WKWebView) {
         // Google Maps JavaScript API 키
-        let apiKey = "AIzaSyCE5Ey4KQcU5d91JKIaVePni4WDouOE7j8"
         
         // HTML 컨텐츠 생성
         let htmlContent = """
@@ -938,7 +937,7 @@ struct GoogleMapsWebView: UIViewRepresentable {
                 }
             }, 1000);
             </script>
-            <script src="https://maps.googleapis.com/maps/api/js?key=\(apiKey)&libraries=geometry&callback=initMap&language=ja" async defer onerror="console.error('Google Maps API 로딩 오류 발생')"></script>
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key=\(googleApiKey)&language=ja&callback=initMap"></script>
         </body>
         </html>
         """
