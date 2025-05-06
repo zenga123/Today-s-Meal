@@ -1,6 +1,5 @@
 import UIKit
 import GoogleMaps
-import GooglePlaces
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -23,16 +22,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             UserDefaults.standard.set(originalSettings, forKey: "AppleLanguages")
         } else {
             UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-        }
-        
-        // Google Places 초기화
-        GMSPlacesClient.provideAPIKey(apiKey)
-        
-        // 초기화 확인
-        if GMSServices.openSourceLicenseInfo() != nil {
-            print("🗺️ Google Maps 서비스 초기화 성공. 키: \(apiKey)")
-        } else {
-            print("⚠️ Google Maps 서비스 초기화 실패")
         }
         
         // 네트워크 및 API 키 설정 확인
