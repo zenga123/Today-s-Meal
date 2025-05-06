@@ -10,6 +10,7 @@ import CoreLocation
 import GoogleMaps
 
 // 앱 정보 확인용 익스텐션 추가
+#if DEBUG
 extension Bundle {
     static func printInfoPlistContents() {
         print("=== Info.plist 내용 확인 ===")
@@ -41,6 +42,7 @@ extension Bundle {
         print("=========================")
     }
 }
+#endif
 
 @main
 struct Today_s_MealApp: App {
@@ -51,6 +53,7 @@ struct Today_s_MealApp: App {
     @StateObject private var locationService = LocationService()
     
     init() {
+        #if DEBUG
         print("🟢🟢🟢 Today_s_MealApp: init 시작 🟢🟢🟢")
         
         // Info.plist 내용 출력
@@ -66,6 +69,7 @@ struct Today_s_MealApp: App {
             print("경고: Info.plist에 위치 권한 설명이 없음")
         }
         print("🟢🟢🟢 Today_s_MealApp: init 완료 🟢🟢🟢")
+        #endif
     }
     
     var body: some Scene {
