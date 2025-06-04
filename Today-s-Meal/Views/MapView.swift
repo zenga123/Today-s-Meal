@@ -235,10 +235,9 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         }
     }
     
-    // 마커 인포윈도우 미표시 설정
-    func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) -> Bool {
-        // 기본 인포윈도우 탭 이벤트 가로채기 (표시하지 않음)
-        return true
+    // 마커 인포윈도우 탭 이벤트 처리
+    func mapView(_ mapView: GMSMapView, didTapInfoWindowOf marker: GMSMarker) {
+        // 기본 인포윈도우 동작을 무시하고 별도 동작 없음
     }
     
     // 마커 탭 시 인포윈도우 표시 여부 결정
@@ -284,11 +283,6 @@ class MapViewCoordinator: NSObject, GMSMapViewDelegate, ObservableObject {
         return emptyView
     }
     
-    // 인포윈도우 표시 시도 시 가로채기
-    func mapView(_ mapView: GMSMapView, willHandle boolValue: Bool) -> Bool {
-        // 기본 처리 차단
-        return true
-    }
     
     // 맵 탭 시 인포윈도우 숨기기
     func mapView(_ mapView: GMSMapView, didTapAt coordinate: CLLocationCoordinate2D) {
